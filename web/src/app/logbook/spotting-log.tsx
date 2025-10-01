@@ -46,7 +46,7 @@ export default function SpottingLog({ initialAircraft }: SpottingLogProps) {
 
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(Array.from(seenIds.values()))
+      JSON.stringify(Array.from(seenIds.values())),
     );
   }, [seenIds, storageReady]);
 
@@ -122,14 +122,14 @@ export default function SpottingLog({ initialAircraft }: SpottingLogProps) {
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-sm md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-slate-100 md:flex-row md:items-end md:justify-between">
         <div className="grid flex-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col text-sm font-medium text-slate-700">
+          <label className="flex flex-col text-sm font-medium text-slate-200">
             Airline
             <select
               value={airlineFilter}
               onChange={(event) => setAirlineFilter(event.target.value)}
-              className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 shadow-inner shadow-black/20 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
             >
               <option value="">All airlines</option>
               {airlines.map((airline) => (
@@ -140,12 +140,12 @@ export default function SpottingLog({ initialAircraft }: SpottingLogProps) {
             </select>
           </label>
 
-          <label className="flex flex-col text-sm font-medium text-slate-700">
+          <label className="flex flex-col text-sm font-medium text-slate-200">
             Aircraft type
             <select
               value={typeFilter}
               onChange={(event) => setTypeFilter(event.target.value)}
-              className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 shadow-inner shadow-black/20 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 disabled:opacity-50"
               disabled={typeOptions.length === 0}
             >
               <option value="">All types</option>
@@ -158,9 +158,9 @@ export default function SpottingLog({ initialAircraft }: SpottingLogProps) {
           </label>
         </div>
 
-        <div className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-900">
-          <p className="font-semibold">Seen summary</p>
-          <p>
+        <div className="rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+          <p className="font-semibold uppercase tracking-wide">Seen summary</p>
+          <p className="text-xs text-cyan-100/80">
             {seenCount} of {initialAircraft.length} aircraft marked as seen
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function SpottingLog({ initialAircraft }: SpottingLogProps) {
 
       <div className="grid gap-4">
         {filteredAircraft.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-600">
+          <p className="rounded-2xl border border-dashed border-white/20 bg-white/5 p-6 text-center text-sm text-slate-300">
             No aircraft match the current filters. Try selecting a different airline or type.
           </p>
         ) : (
@@ -177,30 +177,32 @@ export default function SpottingLog({ initialAircraft }: SpottingLogProps) {
             return (
               <article
                 key={aircraft.id}
-                className={`flex flex-col justify-between gap-3 rounded-2xl border p-4 transition hover:shadow-md md:flex-row md:items-center ${
-                  isSeen ? "border-blue-400 bg-blue-50" : "border-slate-200 bg-white"
+                className={`flex flex-col justify-between gap-3 rounded-2xl border p-4 transition hover:border-cyan-400/50 hover:bg-cyan-500/10 md:flex-row md:items-center ${
+                  isSeen
+                    ? "border-cyan-400/50 bg-cyan-500/10 text-cyan-100"
+                    : "border-white/10 bg-slate-900/70 text-slate-100"
                 }`}
               >
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">
+                  <h2 className="text-lg font-semibold">
                     {aircraft.registration}
                   </h2>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm opacity-80">
                     {aircraft.airline || "Unknown airline"} · {aircraft.type || "Unknown type"}
                   </p>
                   {aircraft.country && (
-                    <p className="text-xs text-slate-500">Registered in {aircraft.country}</p>
+                    <p className="text-xs opacity-60">Registered in {aircraft.country}</p>
                   )}
                 </div>
 
-                <label className="flex items-center justify-end gap-2 text-sm font-medium text-slate-700">
+                <label className="flex items-center justify-end gap-2 text-sm font-medium">
                   <input
                     type="checkbox"
                     checked={isSeen}
                     onChange={() => toggleSeen(aircraft.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="h-5 w-5 rounded border-white/30 bg-slate-950/60 text-cyan-400 focus:ring-cyan-300"
                   />
-                  Seen it!
+                  Mark as seen
                 </label>
               </article>
             );

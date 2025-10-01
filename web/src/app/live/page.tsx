@@ -250,9 +250,9 @@ export default function LiveAdsbPage() {
   }, [lastUpdated]);
 
   return (
-    <main className="relative min-h-screen bg-[#020c19] text-sky-100">
+    <main className="relative min-h-screen bg-[#020c19] pb-10 pt-24 text-sky-100">
       <div className="pointer-events-none absolute inset-0 bg-[url('/textures/aviation-chart.svg')] bg-cover opacity-20" />
-      <div className="relative z-10 flex min-h-screen flex-col gap-6 px-4 pb-10 pt-6 lg:flex-row lg:px-8">
+      <div className="relative z-10 flex min-h-[calc(100vh-6rem)] flex-col gap-6 px-4 lg:flex-row lg:px-8">
         <section className="flex-1 rounded-3xl border border-sky-900/40 bg-slate-950/50 p-6 shadow-2xl shadow-sky-900/40 backdrop-blur-xl">
           <header className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>

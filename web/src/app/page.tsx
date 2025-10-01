@@ -177,7 +177,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(148,163,184,0.06)_0%,transparent_40%,rgba(15,118,110,0.08)_100%)]" />
       </div>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 pb-20 pt-12 lg:px-8 lg:pt-16">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 pb-20 pt-24 lg:px-8 lg:pt-28">
         <header className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl lg:p-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
