@@ -54,6 +54,20 @@ class FetchLiveFleetTests(SimpleTestCase):
 
         self.assertEqual(len(results), 1)
 
+    @override_settings(AIRCRAFT_FEED_MAX_RESULTS=0)
+    def test_fetch_live_fleet_reads_full_dataset_when_cap_disabled(self):
+        with mock.patch.object(aircraft_feed, "_open_feed", side_effect=self._mock_feed):
+            results = aircraft_feed.fetch_live_fleet(use_cache=False)
+
+        self.assertEqual(len(results), 3)
+
+    @override_settings(AIRCRAFT_FEED_MAX_RESULTS=2)
+    def test_fetch_live_fleet_limit_zero_overrides_cap(self):
+        with mock.patch.object(aircraft_feed, "_open_feed", side_effect=self._mock_feed):
+            results = aircraft_feed.fetch_live_fleet(limit=0, use_cache=False)
+
+        self.assertEqual(len(results), 3)
+
     def test_fetch_live_fleet_falls_back_to_sample_dataset(self):
         with mock.patch.object(
             aircraft_feed,
