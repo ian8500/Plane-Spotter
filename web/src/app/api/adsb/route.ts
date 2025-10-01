@@ -14,126 +14,137 @@ export type FlightState = {
   destination: string;
 };
 
-const BASE_FLIGHTS: FlightState[] = [
-  {
-    id: "400ABC",
-    callsign: "BAW123",
-    lat: 51.4706,
-    lon: -0.4619,
-    alt: 34000,
-    speed: 470,
-    heading: 90,
-    origin: "EGLL",
-    destination: "KJFK",
-  },
-  {
-    id: "400BCD",
-    callsign: "EZY456",
-    lat: 51.1537,
-    lon: -0.1821,
-    alt: 28000,
-    speed: 430,
-    heading: 140,
-    origin: "EGKK",
-    destination: "LEBL",
-  },
-  {
-    id: "406DEF",
-    callsign: "RYR89M",
-    lat: 52.0,
-    lon: 0.25,
-    alt: 36000,
-    speed: 450,
-    heading: 210,
-    origin: "EIDW",
-    destination: "LTFM",
-  },
-  {
-    id: "407AAA",
-    callsign: "DLH4QA",
-    lat: 51.889,
-    lon: -0.233,
-    alt: 32000,
-    speed: 440,
-    heading: 70,
-    origin: "EDDF",
-    destination: "KEWR",
-  },
-  {
-    id: "401AAA",
-    callsign: "UAE2",
-    lat: 51.7,
-    lon: 0.18,
-    alt: 39000,
-    speed: 500,
-    heading: 260,
-    origin: "OMDB",
-    destination: "EGLL",
-  },
-  {
-    id: "43ABCD",
-    callsign: "AFR106",
-    lat: 51.3,
-    lon: -0.6,
-    alt: 33000,
-    speed: 465,
-    heading: 305,
-    origin: "LFPG",
-    destination: "KMIA",
-  },
+type OpenSkyStateVector = [
+  string | null,
+  string | null,
+  string | null,
+  number | null,
+  number | null,
+  number | null,
+  number | null,
+  number | null,
+  boolean | null,
+  number | null,
+  number | null,
+  number | null,
+  number[] | null,
+  number | null,
+  string | null,
+  boolean | null,
+  number | null,
+  number | null,
 ];
 
-function makeFlightPosition(base: FlightState, index: number): FlightState {
-  const now = Date.now();
-  const cycle = (now / 600000 + index) * Math.PI * 2; // slow oscillation
+type OpenSkyResponse = {
+  time: number;
+  states: OpenSkyStateVector[] | null;
+};
 
-  const latOffset = Math.sin(cycle) * 0.25;
-  const lonOffset = Math.cos(cycle) * 0.35;
+const OPENSKY_ENDPOINT = "https://opensky-network.org/api/states/all";
+const MAX_FLIGHTS = 200;
+const MS_TO_KNOTS = 1.94384;
+const M_TO_FEET = 3.28084;
 
-  const velocityLat = Math.cos(cycle) * 0.25;
-  const velocityLon = -Math.sin(cycle) * 0.35;
-  const heading = (Math.atan2(velocityLon, velocityLat) * 180) / Math.PI;
+function parseFloatOrNull(value: string | null): number | null {
+  if (!value) return null;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
-  const speed = base.speed + Math.sin(now / 240000 + index) * 25;
-  const alt = base.alt + Math.cos(now / 360000 + index) * 800;
+function clampHeading(heading: number | null): number {
+  if (typeof heading !== "number" || Number.isNaN(heading)) {
+    return 0;
+  }
+  return ((heading % 360) + 360) % 360;
+}
+
+function mapStateVector(state: OpenSkyStateVector): FlightState | null {
+  const [icao24, callsign, originCountry, , , lon, lat, baroAlt, , velocity, heading, , , geoAltitude] = state;
+
+  if (typeof lat !== "number" || typeof lon !== "number") {
+    return null;
+  }
+
+  const bestAltitude =
+    typeof geoAltitude === "number"
+      ? geoAltitude
+      : typeof baroAlt === "number"
+        ? baroAlt
+        : null;
+
+  const altitudeFeet = bestAltitude ? Math.max(0, Math.round((bestAltitude * M_TO_FEET) / 25) * 25) : 0;
+  const speedKnots = velocity ? Math.max(0, Math.round(velocity * MS_TO_KNOTS)) : 0;
 
   return {
-    ...base,
-    lat: base.lat + latOffset,
-    lon: base.lon + lonOffset,
-    heading: (heading + 360) % 360,
-    speed: Math.max(240, Math.round(speed)),
-    alt: Math.max(1800, Math.round(alt / 25) * 25),
+    id: (icao24 ?? "UNKNOWN").toUpperCase(),
+    callsign: (callsign ?? "").trim(),
+    lat,
+    lon,
+    alt: altitudeFeet,
+    speed: speedKnots,
+    heading: clampHeading(heading ?? null),
+    origin: originCountry?.trim() || "—",
+    destination: "—",
   };
 }
 
-function filterByBounds(flights: FlightState[], url: URL) {
-  const minLat = parseFloat(url.searchParams.get("minLat") ?? "");
-  const maxLat = parseFloat(url.searchParams.get("maxLat") ?? "");
-  const minLon = parseFloat(url.searchParams.get("minLon") ?? "");
-  const maxLon = parseFloat(url.searchParams.get("maxLon") ?? "");
+function buildOpenSkyUrl(url: URL): string {
+  const lamin = parseFloatOrNull(url.searchParams.get("minLat"));
+  const lamax = parseFloatOrNull(url.searchParams.get("maxLat"));
+  const lomin = parseFloatOrNull(url.searchParams.get("minLon"));
+  const lomax = parseFloatOrNull(url.searchParams.get("maxLon"));
 
-  if ([minLat, maxLat, minLon, maxLon].some((value) => Number.isNaN(value))) {
-    return flights;
+  const params = new URLSearchParams();
+
+  if (lamin !== null && lamax !== null && lomin !== null && lomax !== null) {
+    params.set("lamin", Math.min(lamin, lamax).toString());
+    params.set("lamax", Math.max(lamin, lamax).toString());
+    params.set("lomin", Math.min(lomin, lomax).toString());
+    params.set("lomax", Math.max(lomin, lomax).toString());
   }
 
-  return flights.filter((flight) => {
-    return (
-      flight.lat >= Math.min(minLat, maxLat) &&
-      flight.lat <= Math.max(minLat, maxLat) &&
-      flight.lon >= Math.min(minLon, maxLon) &&
-      flight.lon <= Math.max(minLon, maxLon)
-    );
-  });
+  const query = params.toString();
+  return query ? `${OPENSKY_ENDPOINT}?${query}` : OPENSKY_ENDPOINT;
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const flights = BASE_FLIGHTS.map((flight, index) => makeFlightPosition(flight, index));
-  const filtered = filterByBounds(flights, url);
+  const endpoint = buildOpenSkyUrl(url);
 
-  return NextResponse.json({
-    flights: filtered,
-    generatedAt: new Date().toISOString(),
-  });
+  try {
+    const response = await fetch(endpoint, {
+      cache: "no-store",
+      headers: {
+        accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenSky request failed with status ${response.status}`);
+    }
+
+    const payload = (await response.json()) as OpenSkyResponse;
+    const flights =
+      payload.states?.map(mapStateVector).filter((state): state is FlightState => state !== null) ?? [];
+
+    const generatedAt =
+      typeof payload.time === "number"
+        ? new Date(payload.time * 1000).toISOString()
+        : new Date().toISOString();
+
+    return NextResponse.json({
+      flights: flights.slice(0, MAX_FLIGHTS),
+      generatedAt,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown ADS-B error";
+    return NextResponse.json(
+      {
+        flights: [],
+        generatedAt: new Date().toISOString(),
+        error: message,
+      },
+      { status: 502 },
+    );
+  }
 }
