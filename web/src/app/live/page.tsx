@@ -9,6 +9,13 @@ const SECTIONAL_STYLE: StyleSpecification = {
   version: 8,
   name: "Sectional Chart",
   sources: {
+    osm: {
+      type: "raster",
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution: "© OpenStreetMap contributors",
+      maxzoom: 19,
+    },
     sectional: {
       type: "raster",
       tiles: [
@@ -27,6 +34,19 @@ const SECTIONAL_STYLE: StyleSpecification = {
       },
     },
     {
+      id: "osm",
+      type: "raster",
+      source: "osm",
+      minzoom: 0,
+      maxzoom: 19,
+      paint: {
+        "raster-brightness-min": 0.25,
+        "raster-brightness-max": 0.85,
+        "raster-saturation": -0.2,
+        "raster-contrast": 0.25,
+      },
+    },
+    {
       id: "sectional",
       type: "raster",
       source: "sectional",
@@ -36,6 +56,7 @@ const SECTIONAL_STYLE: StyleSpecification = {
         "raster-brightness-min": 0.35,
         "raster-brightness-max": 0.95,
         "raster-saturation": -0.15,
+        "raster-opacity": 0.55,
       },
     },
   ],
