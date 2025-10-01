@@ -14,6 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/live", label: "Live Map" },
   { href: "/frequencies", label: "Frequencies" },
   { href: "/maps", label: "Maps" },
+  { href: "/fleets", label: "Fleets" },
   { href: "/logbook", label: "Logbook" },
   { href: "/forums", label: "Community" },
 ];

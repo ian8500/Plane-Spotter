@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { useSeenAircraft } from "./use-seen-aircraft";
+
 type Aircraft = {
   id: number;
   registration: string;
@@ -14,41 +16,10 @@ type SpottingLogProps = {
   initialAircraft: Aircraft[];
 };
 
-const STORAGE_KEY = "plane-spotter/logbook-seen";
-
 export default function SpottingLog({ initialAircraft }: SpottingLogProps) {
   const [airlineFilter, setAirlineFilter] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
-  const [seenIds, setSeenIds] = useState<Set<number>>(new Set());
-  const [storageReady, setStorageReady] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as number[];
-        setSeenIds(new Set(parsed));
-      } catch (error) {
-        console.warn("Unable to parse spotting log storage", error);
-      }
-    }
-    setStorageReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!storageReady || typeof window === "undefined") {
-      return;
-    }
-
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(Array.from(seenIds.values())),
-    );
-  }, [seenIds, storageReady]);
+  const { seenIds, toggleSeen } = useSeenAircraft();
 
   const airlines = useMemo(() => {
     const unique = new Set<string>();
@@ -107,18 +78,6 @@ export default function SpottingLog({ initialAircraft }: SpottingLogProps) {
   }, [airlineFilter, typeFilter, initialAircraft]);
 
   const seenCount = useMemo(() => seenIds.size, [seenIds]);
-
-  const toggleSeen = (id: number) => {
-    setSeenIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
 
   return (
     <section className="space-y-6">

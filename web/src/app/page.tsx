@@ -13,6 +13,7 @@ const navLinks = [
   { label: "Airports", href: "/airports" },
   { label: "Live Map", href: "/live" },
   { label: "Frequencies", href: "/frequencies" },
+  { label: "Fleets", href: "/fleets" },
   { label: "Logbook", href: "/logbook" },
 ];
 
@@ -80,6 +81,28 @@ const features: Feature[] = [
       </svg>
     ),
     badge: "Live layers",
+  },
+  {
+    title: "Airline Fleets",
+    description: "Dive into each carrier's fleet, grouped by type with instant seen progress from your logbook.",
+    href: "/fleets",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        strokeWidth="1.5"
+        className="h-6 w-6 text-cyan-300"
+      >
+        <path
+          d="m3 6 9-3 9 3m-16 4 7-2 7 2m-14 4 9-3 9 3"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path d="M3 6v12l9 3 9-3V6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
   },
   {
     title: "Live ADS-B",
