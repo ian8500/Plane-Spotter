@@ -54,9 +54,9 @@ class Photo(models.Model):
 
 class Aircraft(models.Model):
     registration = models.CharField(max_length=16, unique=True)  # e.g., G-EZTH
-    type = models.CharField(max_length=50, blank=True)          # A320, B738, DH8D...
-    airline = models.CharField(max_length=100, blank=True)
-    country = models.CharField(max_length=100, blank=True)
+    type = models.CharField(max_length=120, blank=True)          # A320-214, B738, DH8D...
+    airline = models.CharField(max_length=200, blank=True)
+    country = models.CharField(max_length=120, blank=True)
 
 class UserSeen(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="seen")
