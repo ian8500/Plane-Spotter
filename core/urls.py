@@ -1,8 +1,21 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (AirportViewSet, FrequencyViewSet, SpottingLocationViewSet, PhotoViewSet,
-                    AircraftViewSet, UserSeenViewSet, PostViewSet, CommentViewSet,
-                    BadgeViewSet, UserBadgeViewSet)
+from .views import (
+    AirportViewSet,
+    FrequencyViewSet,
+    SpottingLocationViewSet,
+    PhotoViewSet,
+    AircraftViewSet,
+    UserSeenViewSet,
+    PostViewSet,
+    CommentViewSet,
+    BadgeViewSet,
+    UserBadgeViewSet,
+    ForumTopicViewSet,
+    ChallengeViewSet,
+    UserChallengeProgressViewSet,
+    CommunityFeedView,
+)
 
 router = DefaultRouter()
 router.register(r"airports", AirportViewSet)
@@ -15,8 +28,12 @@ router.register(r"posts", PostViewSet)
 router.register(r"comments", CommentViewSet)
 router.register(r"badges", BadgeViewSet)
 router.register(r"userbadges", UserBadgeViewSet)
+router.register(r"topics", ForumTopicViewSet)
+router.register(r"challenges", ChallengeViewSet)
+router.register(r"challenge-progress", UserChallengeProgressViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("community/feed/", CommunityFeedView.as_view(), name="community-feed"),
 ]
 
