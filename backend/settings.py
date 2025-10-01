@@ -138,3 +138,13 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     )
 }
+
+
+# Aircraft feed configuration (see core.services.aircraft_feed)
+AIRCRAFT_FEED_URL = os.getenv(
+    "AIRCRAFT_FEED_URL",
+    "https://opensky-network.org/datasets/metadata/aircraftDatabase.csv",
+)
+AIRCRAFT_FEED_TIMEOUT = int(os.getenv("AIRCRAFT_FEED_TIMEOUT", "15"))
+AIRCRAFT_FEED_CACHE_SECONDS = int(os.getenv("AIRCRAFT_FEED_CACHE_SECONDS", "900"))
+AIRCRAFT_FEED_MAX_RESULTS = int(os.getenv("AIRCRAFT_FEED_MAX_RESULTS", "200"))
