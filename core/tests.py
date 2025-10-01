@@ -218,6 +218,80 @@ class SyncAircraftCommandTests(TestCase):
         self.assertTrue(Aircraft.objects.filter(registration="F-HSUN").exists())
 
 
+class BootstrapAircraftCommandTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def test_bootstrap_runs_migrations_and_sync(self):
+        payload = [
+            {
+                "registration": "CS-TPY",
+                "model": "A321-251NX",
+                "type_code": "A21N",
+                "operator": "TAP Air Portugal",
+                "country": "Portugal",
+            }
+        ]
+
+        with mock.patch(
+            "core.management.commands.bootstrap_aircraft_fleet.call_command"
+        ) as migrate_cmd, mock.patch.object(
+            aircraft_feed, "fetch_live_fleet", return_value=payload
+        ):
+            out = io.StringIO()
+            call_command("bootstrap_aircraft_fleet", stdout=out)
+
+        migrate_cmd.assert_called_once_with(
+            "migrate", interactive=False, verbosity=0
+        )
+        self.assertTrue(Aircraft.objects.filter(registration="CS-TPY").exists())
+        output = out.getvalue()
+        self.assertIn("Migrations applied.", output)
+        self.assertIn("Processed 1 aircraft records.", output)
+
+    def test_bootstrap_honours_sync_flags(self):
+        with mock.patch(
+            "core.management.commands.bootstrap_aircraft_fleet.call_command"
+        ), mock.patch(
+            "core.management.commands.bootstrap_aircraft_fleet.sync_aircraft_database"
+        ) as sync_mock:
+            sync_mock.return_value = {
+                "processed": 0,
+                "created": 0,
+                "updated": 0,
+                "skipped": 0,
+                "removed": 0,
+            }
+
+            call_command(
+                "bootstrap_aircraft_fleet",
+                "--limit",
+                "25",
+                "--no-cache",
+                "--prune",
+                stdout=io.StringIO(),
+            )
+
+        sync_mock.assert_called_once_with(limit=25, use_cache=False, prune=True)
+
+    def test_bootstrap_can_skip_sync(self):
+        with mock.patch(
+            "core.management.commands.bootstrap_aircraft_fleet.call_command"
+        ) as migrate_cmd, mock.patch(
+            "core.management.commands.bootstrap_aircraft_fleet.sync_aircraft_database"
+        ) as sync_mock:
+            call_command(
+                "bootstrap_aircraft_fleet",
+                "--skip-sync",
+                stdout=io.StringIO(),
+            )
+
+        migrate_cmd.assert_called_once_with(
+            "migrate", interactive=False, verbosity=0
+        )
+        sync_mock.assert_not_called()
+
+
 class UserSeenAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
