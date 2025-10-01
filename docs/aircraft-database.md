@@ -30,6 +30,8 @@ python manage.py bootstrap_aircraft_fleet
 
 The command applies migrations (seeding the baked-in sample fleet) and then pulls live aircraft data from the configured feed. It prints a summary of how many registrations were created, updated, skipped, or removed.
 
+Use this route when you just want a working environment without juggling multiple commands — for example when spinning up a review app or refreshing a local database before testing the UI.
+
 ### Useful options
 
 - `--skip-sync` – run migrations only and skip the live feed import.
@@ -45,7 +47,7 @@ If you prefer to control the steps yourself, you can still call the sync command
 python manage.py sync_aircraft_database
 ```
 
-This downloads up to `AIRCRAFT_FEED_MAX_RESULTS` records (default `200`) from the OpenSky aircraft metadata feed and upserts them into the local database. Existing registrations are updated with the latest airline, type, and country information.
+This downloads up to `AIRCRAFT_FEED_MAX_RESULTS` records (default `200`) from the OpenSky aircraft metadata feed and upserts them into the local database. Existing registrations are updated with the latest airline, type, and country information. Reach for this approach when you need to orchestrate migrations separately (for example as part of a CI workflow) or when you want to run an import with customised flags.
 
 ## Updating the Feed Configuration
 
@@ -70,4 +72,4 @@ from core.models import Aircraft
 Aircraft.objects.count()
 ```
 
-Expect at least the sample registrations from the migration, with additional entries filled in by the feed import.
+Expect at least the sample registrations from the migration, with additional entries filled in by the feed import. When the count remains unchanged, review the management command output — it will tell you whether records were skipped (already up-to-date) or if the remote feed could not be reached.
