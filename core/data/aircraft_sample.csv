@@ -1,0 +1,21 @@
+icao24,registration,manufacturername,manufacturericao,model,typecode,icaoaircrafttype,operator,operatorcallsign,owner,serialnumber,built,registeredcountry,operatorcountry
+40699f,G-EZTH,Airbus Industrie,A320,Airbus A320-214,A320,A320,EasyJet Airline Company Limited,EZY,EasyJet Airline Company Limited,4100,2012,United Kingdom,United Kingdom
+406c03,G-UZHA,Airbus Industrie,A321,Airbus A321-251NX,A21N,A321,British Airways Shuttle,BAW,British Airways Plc,8477,2018,United Kingdom,United Kingdom
+406a8d,G-XLEL,Airbus Industrie,A350,Airbus A350-1041,A35K,A350,British Airways,BAW,British Airways Plc,375,2020,United Kingdom,United Kingdom
+40621c,G-VNEW,Airbus Industrie,A350,Airbus A350-1041,A35K,A350,Virgin Atlantic Airways,VIR,Virgin Atlantic Airways Ltd,195,2018,United Kingdom,United Kingdom
+4072b8,G-TTNA,Airbus Industrie,A320,Airbus A320-251N,A20N,A320,British Airways,BAW,British Airways Plc,8419,2018,United Kingdom,United Kingdom
+406b72,G-NEOS,Airbus Industrie,A321,Airbus A321-251NX,A21N,A321,British Airways Shuttle,BAW,British Airways Plc,8940,2021,United Kingdom,United Kingdom
+4068a8,G-DFOG,De Havilland Canada,DHC8,De Havilland DHC-8-402,DH8D,DH8D,Loganair,LOG,Loganair Ltd,4326,2010,United Kingdom,United Kingdom
+406a4c,G-PRPK,Embraer,ERJ,Embraer ERJ-190-200LR,E190,E190,BA CityFlyer,CFE,British Airways Plc,19000448,2014,United Kingdom,United Kingdom
+406446,G-FBJF,Embraer,ERJ,Embraer ERJ-170-100LR,E170,E170,Flybe,BEE,Flybe Ltd,17000398,2013,United Kingdom,United Kingdom
+4ca1ae,EI-DVM,Boeing Commercial Airplanes,B738,Boeing 737-8AS,B738,B738,Ryanair,RYR,Ryanair Ltd,39095,2014,Ireland,Ireland
+4ca2c2,EI-EVK,Boeing Commercial Airplanes,B738,Boeing 737-8AS,B738,B738,Ryanair,RYR,Ryanair Ltd,38512,2012,Ireland,Ireland
+4ca9a8,EI-LRA,Airbus Industrie,A321,Airbus A321-253NX,A21N,A321,Aer Lingus,EIN,Aer Lingus Ltd,10845,2021,Ireland,Ireland
+45b08c,OY-KAT,Airbus Industrie,A320,Airbus A320-251N,A20N,A320,SAS Scandinavian Airlines,SAS,Scandinavian Airlines System,8338,2017,Denmark,Denmark
+3c6649,D-AIJB,Airbus Industrie,A320,Airbus A320-214,A320,A320,Lufthansa,DLH,Deutsche Lufthansa AG,5397,2013,Germany,Germany
+39cd5c,F-HSUN,Airbus Industrie,A321,Airbus A321-271NX,A21N,A321,Sunshine Air,SUN,Sunshine Air,10295,2020,France,France
+a5c08a,N12345,Boeing Commercial Airplanes,B738,Boeing 737-8H4,B738,B738,Southwest Airlines,SWA,Southwest Airlines Co,36915,2010,United States,United States
+a6f2f3,N29975,Boeing Commercial Airplanes,B739,Boeing 737-924ER,B739,B739,United Airlines,UAL,United Airlines Inc,41704,2014,United States,United States
+c05f33,C-FIVS,Boeing Commercial Airplanes,B77W,Boeing 777-333ER,B77W,B77W,Air Canada,ACA,Air Canada,35253,2007,Canada,Canada
+8a0319,JA873A,Boeing Commercial Airplanes,B789,Boeing 787-9,B789,B789,All Nippon Airways,ANA,All Nippon Airways Co Ltd,34530,2014,Japan,Japan
+7c6de0,VH-ZND,Airbus Industrie,A321,Airbus A321-271NX,A21N,A321,Qantas Airways,QFA,Qantas Airways Ltd,10333,2020,Australia,Australia
