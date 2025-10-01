@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { NavigationControl, Popup } from "maplibre-gl";
 import type { Map, Marker, StyleSpecification } from "maplibre-gl";
 import type { FlightState } from "../api/adsb/route";
+import { apiGet } from "@/lib/api";
 
 const SECTIONAL_STYLE: StyleSpecification = {
   version: 8,
@@ -67,41 +68,152 @@ type MarkerRecord = {
   label: HTMLSpanElement;
 };
 
+type Airport = {
+  icao: string;
+  iata: string;
+  name: string;
+  city: string;
+  country: string;
+};
+
 const INITIAL_CENTER: [number, number] = [-0.4543, 51.4706];
 const REFRESH_INTERVAL_MS = 15000;
-
-function renderPopup(flight: FlightState) {
-  const { callsign, origin, destination, alt, speed, heading } = flight;
-  return `
-    <div class="adsb-popup">
-      <div class="adsb-popup__title">${callsign || flight.id}</div>
-      <div class="adsb-popup__meta">${origin} ➞ ${destination}</div>
-      <div class="adsb-popup__meta">Alt ${alt.toLocaleString()} ft · ${speed} kt · HDG ${Math.round(heading)}°</div>
-    </div>
-  `;
-}
 
 export default function LiveAdsbPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const markersRef = useRef<Map<string, MarkerRecord>>(new Map());
   const intervalRef = useRef<number | null>(null);
+  const fetchFlightsRef = useRef<() => Promise<void> | null>(null);
 
   const [flights, setFlights] = useState<FlightState[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [airports, setAirports] = useState<Airport[]>([]);
+  const [isAirportLoading, setIsAirportLoading] = useState<boolean>(false);
+  const [airportError, setAirportError] = useState<string | null>(null);
+  const [originFilter, setOriginFilter] = useState<string>("");
+  const [destinationFilter, setDestinationFilter] = useState<string>("");
+
+  useEffect(() => {
+    let isCancelled = false;
+    const loadAirports = async () => {
+      setIsAirportLoading(true);
+      try {
+        const data = await apiGet<Airport[]>("/airports/");
+        if (!isCancelled) {
+          setAirports(data);
+          setAirportError(null);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          const message = err instanceof Error ? err.message : "Unable to load airport directory";
+          setAirportError(message);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsAirportLoading(false);
+        }
+      }
+    };
+
+    loadAirports();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const airportLookup = useMemo(() => {
+    const map = new Map<string, Airport>();
+    airports.forEach((airport) => {
+      map.set(airport.icao.toUpperCase(), airport);
+    });
+    return map;
+  }, [airports]);
+
+  const formatAirportCode = useCallback(
+    (code: string) => {
+      const trimmed = code?.trim();
+      if (!trimmed || trimmed === "—") {
+        return "—";
+      }
+      const icao = trimmed.toUpperCase();
+      const match = airportLookup.get(icao);
+      if (!match) {
+        return icao;
+      }
+      const iata = match.iata?.toUpperCase();
+      if (iata && iata !== icao) {
+        return `${icao} (${iata})`;
+      }
+      return icao;
+    },
+    [airportLookup],
+  );
+
+  const formatAirportDetail = useCallback(
+    (code: string) => {
+      const trimmed = code?.trim();
+      if (!trimmed || trimmed === "—") {
+        return "—";
+      }
+      const icao = trimmed.toUpperCase();
+      const match = airportLookup.get(icao);
+      if (!match) {
+        return icao;
+      }
+      const iata = match.iata?.toUpperCase();
+      const codes = iata && iata !== icao ? `${icao} (${iata})` : icao;
+      const location = match.city ? `${match.city}, ${match.country}` : match.country;
+      return `${codes} · ${match.name}${location ? ` – ${location}` : ""}`;
+    },
+    [airportLookup],
+  );
+
+  const airportOptions = useMemo(() => {
+    return [...airports]
+      .map((airport) => {
+        const icao = airport.icao.toUpperCase();
+        const iata = airport.iata ? airport.iata.toUpperCase() : "";
+        const codes = iata && iata !== icao ? `${icao} (${iata})` : icao;
+        const location = airport.city ? `${airport.city}, ${airport.country}` : airport.country;
+        return {
+          value: icao,
+          label: `${codes} · ${airport.name}${location ? ` – ${location}` : ""}`,
+        };
+      })
+      .sort((a, b) => a.value.localeCompare(b.value));
+  }, [airports]);
+
+  const hasFilters = originFilter !== "" || destinationFilter !== "";
 
   const headerStats = useMemo(() => {
     if (!flights.length) {
-      return "No traffic in range";
+      return hasFilters ? "No aircraft match the selected filters" : "No traffic in range";
     }
 
     const averageAltitude = Math.round(
       flights.reduce((sum, flight) => sum + flight.alt, 0) / flights.length,
     );
-    return `${flights.length} aircraft tracked · Avg ${averageAltitude.toLocaleString()} ft`;
-  }, [flights]);
+    const prefix = hasFilters ? "match filters" : "tracked";
+    return `${flights.length} aircraft ${prefix} · Avg ${averageAltitude.toLocaleString()} ft`;
+  }, [flights, hasFilters]);
+
+  const renderPopup = useCallback(
+    (flight: FlightState) => {
+      const { callsign, alt, speed, heading } = flight;
+      return `
+        <div class="adsb-popup">
+          <div class="adsb-popup__title">${callsign || flight.id}</div>
+          <div class="adsb-popup__meta">${formatAirportDetail(flight.origin)} ➞ ${formatAirportDetail(flight.destination)}</div>
+          <div class="adsb-popup__meta">Alt ${alt.toLocaleString()} ft · ${speed} kt · HDG ${Math.round(heading)}°</div>
+        </div>
+      `;
+    },
+    [formatAirportDetail],
+  );
 
   const updateMarkers = useCallback(
     (newFlights: FlightState[]) => {
@@ -157,7 +269,7 @@ export default function LiveAdsbPage() {
         }
       });
     },
-    [],
+    [renderPopup],
   );
 
   const fetchFlights = useCallback(async () => {
@@ -166,6 +278,7 @@ export default function LiveAdsbPage() {
     }
 
     try {
+      setIsLoading(true);
       const bounds = mapRef.current.getBounds();
       const params = new URLSearchParams({
         minLat: bounds.getSouth().toFixed(4),
@@ -173,6 +286,13 @@ export default function LiveAdsbPage() {
         minLon: bounds.getWest().toFixed(4),
         maxLon: bounds.getEast().toFixed(4),
       });
+
+      if (originFilter) {
+        params.set("origin", originFilter);
+      }
+      if (destinationFilter) {
+        params.set("destination", destinationFilter);
+      }
 
       const response = await fetch(`/api/adsb?${params.toString()}`, {
         cache: "no-store",
@@ -197,7 +317,11 @@ export default function LiveAdsbPage() {
       setError(message);
       setIsLoading(false);
     }
-  }, [updateMarkers]);
+  }, [updateMarkers, originFilter, destinationFilter]);
+
+  useEffect(() => {
+    fetchFlightsRef.current = fetchFlights;
+  }, [fetchFlights]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -218,16 +342,22 @@ export default function LiveAdsbPage() {
 
     map.addControl(new NavigationControl({ visualizePitch: true }), "top-left");
 
+    const handleMoveEnd = () => {
+      fetchFlightsRef.current?.();
+    };
+
     map.on("load", () => {
-      fetchFlights();
-      map.on("moveend", fetchFlights);
-      intervalRef.current = window.setInterval(fetchFlights, REFRESH_INTERVAL_MS);
+      fetchFlightsRef.current?.();
+      map.on("moveend", handleMoveEnd);
+      intervalRef.current = window.setInterval(() => {
+        fetchFlightsRef.current?.();
+      }, REFRESH_INTERVAL_MS);
     });
 
     const markers = markersRef.current;
 
     return () => {
-      map.off("moveend", fetchFlights);
+      map.off("moveend", handleMoveEnd);
       markers.forEach(({ marker }) => marker.remove());
       markers.clear();
       markersRef.current = new Map();
@@ -238,6 +368,13 @@ export default function LiveAdsbPage() {
       map.remove();
       mapRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current) {
+      return;
+    }
+    fetchFlights();
   }, [fetchFlights]);
 
   const formattedTimestamp = useMemo(() => {
@@ -263,6 +400,49 @@ export default function LiveAdsbPage() {
               {formattedTimestamp ? `Updated ${formattedTimestamp}` : "Awaiting data"}
             </div>
           </header>
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300/80">
+                Departure airport
+              </span>
+              <select
+                value={originFilter}
+                onChange={(event) => setOriginFilter(event.target.value.toUpperCase())}
+                className="rounded-xl border border-sky-800/60 bg-slate-900/80 px-3 py-2 text-sm text-sky-100 shadow-inner shadow-sky-900/40 focus:border-sky-500 focus:outline-none"
+                disabled={isAirportLoading && !airportOptions.length}
+              >
+                <option value="">All departures</option>
+                {airportOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300/80">
+                Arrival airport
+              </span>
+              <select
+                value={destinationFilter}
+                onChange={(event) => setDestinationFilter(event.target.value.toUpperCase())}
+                className="rounded-xl border border-sky-800/60 bg-slate-900/80 px-3 py-2 text-sm text-sky-100 shadow-inner shadow-sky-900/40 focus:border-sky-500 focus:outline-none"
+                disabled={isAirportLoading && !airportOptions.length}
+              >
+                <option value="">All arrivals</option>
+                {airportOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {airportError && (
+            <div className="mb-4 rounded-xl border border-amber-400/50 bg-amber-950/40 px-4 py-2 text-xs text-amber-100">
+              {airportError}
+            </div>
+          )}
           <p className="mb-4 text-sm text-sky-200/80">{headerStats}</p>
           <div
             ref={mapContainerRef}
@@ -295,7 +475,11 @@ export default function LiveAdsbPage() {
                       <span className="text-xs text-sky-300/80">{Math.round(flight.speed)} kt</span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-sky-200/70">
-                      <span>{flight.origin} ➞ {flight.destination}</span>
+                      <span
+                        title={`${formatAirportDetail(flight.origin)} → ${formatAirportDetail(flight.destination)}`}
+                      >
+                        {formatAirportCode(flight.origin)} ➞ {formatAirportCode(flight.destination)}
+                      </span>
                       <span>FL{Math.round(flight.alt / 100)}</span>
                       <span>HDG {Math.round(flight.heading)}°</span>
                     </div>
