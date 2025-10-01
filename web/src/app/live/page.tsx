@@ -381,8 +381,15 @@ export default function LiveAdsbPage() {
         scheduleNextFetch();
       }
     }
-
-    
+  }, [
+    limitToMapView,
+    originFilter,
+    destinationFilter,
+    minAltitude,
+    maxAltitude,
+    scheduleNextFetch,
+    updateMarkers,
+  ]);
 
   useEffect(() => {
     fetchFlightsRef.current = fetchFlights;
