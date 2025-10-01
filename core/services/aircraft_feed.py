@@ -24,7 +24,19 @@ class AircraftFeedError(RuntimeError):
 logger = logging.getLogger(__name__)
 
 
-FALLBACK_DATASET = Path(__file__).resolve().parent / "data" / "aircraft_sample.csv"
+FALLBACK_DATASET = (
+    Path(__file__).resolve().parent / "data" / "aircraft_sample.csv"
+)
+
+if not FALLBACK_DATASET.exists():
+    # Older releases bundled the sample dataset under ``core/data`` rather than
+    # ``core/services/data``.  In development environments the file still lives
+    # there, which meant the fallback path silently pointed at a non-existent
+    # file and the aircraft list ended up empty.  Look one directory higher as a
+    # backwards compatible fallback so the bundled dataset is always found.
+    FALLBACK_DATASET = (
+        Path(__file__).resolve().parent.parent / "data" / "aircraft_sample.csv"
+    )
 
 
 @dataclass(frozen=True)
