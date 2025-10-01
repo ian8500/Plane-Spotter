@@ -2,6 +2,7 @@
 
 The aircraft logbook in the web client reads from the `/aircraft/` endpoint, which serves records from the `core.Aircraft` model. A fresh install only contains the schema, so you need to load some fleet data before those lookups will work. The steps below walk through preparing the environment, running the migrations (which include a baked-in sample fleet), and importing the latest aircraft feed.
 
+
 ## Prerequisites
 
 1. **Install backend dependencies.** From an activated virtual environment run:
@@ -20,17 +21,13 @@ The aircraft logbook in the web client reads from the `/aircraft/` endpoint, whi
 
    The migration uses `update_or_create`, so it is safe to rerun after pulling updates — existing sample tail numbers will be refreshed rather than duplicated.
 
-## Quick Bootstrap (Recommended)
 
-If you want the backend ready in a single step, use the bundled bootstrapper after installing dependencies:
 
 ```bash
 python manage.py bootstrap_aircraft_fleet
 ```
 
-The command applies migrations (seeding the baked-in sample fleet) and then pulls live aircraft data from the configured feed. It prints a summary of how many registrations were created, updated, skipped, or removed.
 
-Use this route when you just want a working environment without juggling multiple commands — for example when spinning up a review app or refreshing a local database before testing the UI.
 
 ### Useful options
 
@@ -72,4 +69,3 @@ from core.models import Aircraft
 Aircraft.objects.count()
 ```
 
-Expect at least the sample registrations from the migration, with additional entries filled in by the feed import. When the count remains unchanged, review the management command output — it will tell you whether records were skipped (already up-to-date) or if the remote feed could not be reached.
