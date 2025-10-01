@@ -27,6 +27,24 @@ class SpottingLocation(models.Model):
     lon = models.FloatField()
     tips = models.TextField(blank=True)  # parking, lens, light, etc.
 
+class AirportResource(models.Model):
+    CATEGORY_CHOICES = [
+        ("map", "Map"),
+        ("guide", "Guide"),
+        ("official", "Official"),
+        ("community", "Community"),
+        ("video", "Video"),
+    ]
+
+    airport = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="resources")
+    title = models.CharField(max_length=200)
+    url = models.URLField()
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="guide")
+    description = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["airport", "title"]
+
 class Photo(models.Model):
     spot = models.ForeignKey(SpottingLocation, on_delete=models.CASCADE, related_name="photos")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)

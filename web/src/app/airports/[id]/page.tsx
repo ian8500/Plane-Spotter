@@ -17,6 +17,14 @@ type SpottingLocation = {
   lon: number;
 };
 
+type AirportResource = {
+  id: number;
+  title: string;
+  url: string;
+  category: string;
+  description: string;
+};
+
 type Airport = {
   id: number;
   icao: string;
@@ -28,10 +36,27 @@ type Airport = {
   lon: number;
   frequencies: Frequency[];
   spots: SpottingLocation[];
+  resources: AirportResource[];
 };
 
 type PageProps = {
   params: Promise<{ id: string }>;
+};
+
+const RESOURCE_CATEGORY_LABELS: Record<string, string> = {
+  map: "Airfield Map",
+  guide: "Spotting Guide",
+  official: "Official",
+  community: "Community",
+  video: "Video",
+};
+
+const RESOURCE_CATEGORY_CLASSES: Record<string, string> = {
+  map: "bg-emerald-100 text-emerald-800",
+  guide: "bg-blue-100 text-blue-800",
+  official: "bg-slate-100 text-slate-800",
+  community: "bg-purple-100 text-purple-800",
+  video: "bg-orange-100 text-orange-800",
 };
 
 export default async function AirportDetailPage({ params }: PageProps) {
@@ -94,6 +119,38 @@ export default async function AirportDetailPage({ params }: PageProps) {
                 ) : null}
               </article>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-3">Resources</h2>
+        {airport.resources.length === 0 ? (
+          <p className="text-gray-600">No resources listed yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {airport.resources.map((resource) => {
+              const categoryLabel = RESOURCE_CATEGORY_LABELS[resource.category] || "Resource";
+              const categoryClasses = RESOURCE_CATEGORY_CLASSES[resource.category] || "bg-gray-100 text-gray-800";
+
+              return (
+                <article key={resource.id} className="rounded-xl border bg-white p-5 shadow-sm">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      <a href={resource.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {resource.title}
+                      </a>
+                    </h3>
+                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${categoryClasses}`}>
+                      {categoryLabel}
+                    </span>
+                  </div>
+                  {resource.description ? (
+                    <p className="text-gray-700 mt-2 text-sm leading-relaxed">{resource.description}</p>
+                  ) : null}
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

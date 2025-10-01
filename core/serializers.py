@@ -1,5 +1,17 @@
 from rest_framework import serializers
-from .models import Airport, Frequency, SpottingLocation, Photo, Aircraft, UserSeen, Post, Comment, Badge, UserBadge
+from .models import (
+    Airport,
+    Frequency,
+    SpottingLocation,
+    AirportResource,
+    Photo,
+    Aircraft,
+    UserSeen,
+    Post,
+    Comment,
+    Badge,
+    UserBadge,
+)
 
 class FrequencySerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,9 +23,15 @@ class SpottingLocationSerializer(serializers.ModelSerializer):
         model = SpottingLocation
         fields = "__all__"
 
+class AirportResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AirportResource
+        fields = "__all__"
+
 class AirportSerializer(serializers.ModelSerializer):
     frequencies = FrequencySerializer(many=True, read_only=True)
     spots = SpottingLocationSerializer(many=True, read_only=True)
+    resources = AirportResourceSerializer(many=True, read_only=True)
     class Meta:
         model = Airport
         fields = "__all__"
