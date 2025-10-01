@@ -5,7 +5,13 @@ from .serializers import (AirportSerializer, FrequencySerializer, SpottingLocati
                           BadgeSerializer, UserBadgeSerializer)
 
 class AirportViewSet(viewsets.ModelViewSet):
-    queryset = Airport.get_queryset().order_by("icao") if hasattr(Airport, "get_queryset") else Airport.objects.all().order_by("icao")
+    """Expose airports with their related frequencies and spotting locations."""
+
+    queryset = (
+        Airport.objects.all()
+        .prefetch_related("frequencies", "spots")
+        .order_by("icao")
+    )
     serializer_class = AirportSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -15,7 +21,7 @@ class FrequencyViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 class SpottingLocationViewSet(viewsets.ModelViewSet):
-    queryset = SpottingLocation.objects.all()
+    queryset = SpottingLocation.objects.select_related("airport").all()
     serializer_class = SpottingLocationSerializer
     permission_classes = [permissions.AllowAny]
 
