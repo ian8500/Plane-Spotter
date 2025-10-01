@@ -2,6 +2,8 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import { PageWrapper } from "@/app/components/page-wrapper";
 import { apiPost } from "@/lib/api";
 
 const TOKEN_STORAGE_KEY = "plane-spotter-token";
@@ -51,7 +53,7 @@ export default function LoginPage() {
         upcoming: true,
       },
     ],
-    []
+    [],
   );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -78,119 +80,113 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-16 px-6 py-16 lg:flex-row lg:items-center">
-        <section className="space-y-6 text-white lg:w-1/2">
-          <p className="inline-flex items-center gap-2 rounded-full bg-slate-900/80 px-4 py-1 text-sm font-medium text-blue-300 ring-1 ring-blue-500/40">
-            Plane Spotter Subscriptions
-          </p>
-          <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">
-            Sign in to manage your flights and upcoming subscription benefits
-          </h1>
-          <p className="text-slate-300">
-            This account unlocks the current experience while laying the groundwork for
-            subscription tiers. Log in now and you will be ready when add-ons and premium
-            data packages roll out.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {subscriptionTiers.map((tier) => (
-              <article
-                key={tier.name}
-                className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-blue-900/20"
-              >
-                <h2 className="text-lg font-semibold text-white">{tier.name}</h2>
-                <p className="mt-2 text-sm text-slate-300">{tier.description}</p>
-                <p className="mt-4 text-xs font-medium uppercase tracking-wide text-blue-300">
-                  {tier.cta}
-                </p>
-                {tier.upcoming ? (
-                  <span className="mt-3 inline-flex w-fit items-center rounded-full bg-blue-500/20 px-3 py-1 text-xs font-semibold text-blue-200">
-                    Coming soon
-                  </span>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="w-full rounded-3xl bg-white p-8 shadow-xl shadow-blue-900/20 lg:w-2/5">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-1">
-              <h2 className="text-2xl font-semibold text-slate-900">Welcome back</h2>
-              <p className="text-sm text-slate-600">
-                Use your Plane Spotter credentials to continue. We will connect this login to
-                subscription management soon.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <label className="block" htmlFor="username">
-                <span className="text-sm font-medium text-slate-700">Email or username</span>
-                <input
-                  id="username"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  required
-                  autoComplete="username"
-                  placeholder="spotter@example.com"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                />
-              </label>
-
-              <label className="block" htmlFor="password">
-                <span className="text-sm font-medium text-slate-700">Password</span>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                />
-              </label>
-
-              <div className="flex items-center justify-between text-sm text-slate-600">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    checked={rememberMe}
-                    onChange={(event) => setRememberMe(event.target.checked)}
-                  />
-                  Remember me on this device
-                </label>
-                <a className="font-medium text-blue-600 hover:text-blue-500" href="#">
-                  Forgot password?
-                </a>
-              </div>
-            </div>
-
-            {error ? (
-              <p className="text-sm text-red-600" role="alert">
-                {error}
-              </p>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-blue-600 py-2 text-white font-semibold shadow hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60"
+    <PageWrapper className="grid gap-12 pt-12 pb-20 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="space-y-6 rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-white shadow-2xl shadow-cyan-500/5">
+        <p className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-200">
+          Plane Spotter Subscriptions
+        </p>
+        <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">
+          Sign in to manage your flights and upcoming subscription benefits
+        </h1>
+        <p className="text-sm text-slate-300">
+          This account unlocks the current experience while laying the groundwork for subscription tiers. Log in now and you will
+          be ready when add-ons and premium data packages roll out.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {subscriptionTiers.map((tier) => (
+            <article
+              key={tier.name}
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg shadow-cyan-500/5"
             >
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
+              <h2 className="text-lg font-semibold text-white">{tier.name}</h2>
+              <p className="mt-2 text-sm text-slate-200">{tier.description}</p>
+              <p className="mt-4 text-xs font-medium uppercase tracking-wide text-cyan-200">{tier.cta}</p>
+              {tier.upcoming ? (
+                <span className="mt-3 inline-flex w-fit items-center rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-200">
+                  Coming soon
+                </span>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      </section>
 
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-              <p className="font-medium text-slate-900">New to Plane Spotter?</p>
-              <p className="mt-1">
-                Start with the Essentials tier today and upgrade when subscriptions launch. Sign in
-                and head to the subscriptions tab to register your interest.
-              </p>
+      <section className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-100 shadow-2xl shadow-cyan-500/5">
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold text-white">Welcome back</h2>
+            <p className="text-sm text-slate-300">
+              Use your Plane Spotter credentials to continue. We will connect this login to subscription management soon.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-slate-200" htmlFor="username">
+              Email or username
+              <input
+                id="username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                required
+                autoComplete="username"
+                placeholder="spotter@example.com"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-slate-100 shadow-inner shadow-black/20 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
+              />
+            </label>
+
+            <label className="block text-sm font-medium text-slate-200" htmlFor="password">
+              Password
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-slate-100 shadow-inner shadow-black/20 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
+              />
+            </label>
+
+            <div className="flex items-center justify-between text-xs text-slate-300">
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-white/30 bg-slate-950/60 text-cyan-400 focus:ring-cyan-300"
+                  checked={rememberMe}
+                  onChange={(event) => setRememberMe(event.target.checked)}
+                />
+                Remember me on this device
+              </label>
+              <a className="font-medium text-cyan-200 transition hover:text-cyan-100" href="#">
+                Forgot password?
+              </a>
             </div>
-          </form>
-        </section>
-      </div>
-    </main>
+          </div>
+
+          {error ? (
+            <p className="rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-2 text-sm text-red-200" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-full border border-cyan-400/40 bg-cyan-500/20 py-2 text-sm font-semibold uppercase tracking-wide text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/25 disabled:opacity-60"
+          >
+            {loading ? "Signing in…" : "Sign in"}
+          </button>
+
+          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-sm text-slate-200">
+            <p className="font-semibold text-white">New to Plane Spotter?</p>
+            <p className="mt-1 text-slate-300">
+              Start with the Essentials tier today and upgrade when subscriptions launch. Sign in and head to the subscriptions tab
+              to register your interest.
+            </p>
+          </div>
+        </form>
+      </section>
+    </PageWrapper>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { PageWrapper } from "@/app/components/page-wrapper";
 import { apiGet } from "@/lib/api";
 
 type FormState = {
@@ -131,7 +132,9 @@ export default function ManualLogbookPage() {
       } catch (loadError) {
         console.error("Failed to load aircraft details", loadError);
         if (!cancelled) {
-          setAircraftError("Unable to load aircraft details right now. Airline and type will remain blank.");
+          setAircraftError(
+            "Unable to load aircraft details right now. Airline and type will remain blank.",
+          );
           setAircraftLoaded(true);
         }
       }
@@ -230,189 +233,193 @@ export default function ManualLogbookPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 py-10 px-4">
-      <div className="mx-auto w-full max-w-4xl space-y-8">
-        <header className="space-y-2">
-          <p className="text-sm text-blue-600">
-            <Link href="/logbook" className="hover:underline">
-              ← Back to fleet log
-            </Link>
-          </p>
-          <h1 className="text-3xl font-bold text-slate-900">Manual Sightings Log</h1>
-          <p className="text-slate-600">
-            Capture the aircraft you have spotted, including when and where you saw them. Entries
-            are stored locally on this device so you can build a personal spotting diary.
-          </p>
-        </header>
+    <PageWrapper className="space-y-10">
+      <header className="space-y-3">
+        <Link
+          href="/logbook"
+          className="inline-flex items-center text-xs font-semibold uppercase tracking-wide text-cyan-300 transition hover:text-cyan-200"
+        >
+          ← Back to fleet log
+        </Link>
+        <h1 className="text-3xl font-semibold text-white">Manual Sightings Log</h1>
+        <p className="max-w-2xl text-sm text-slate-300">
+          Capture the aircraft you have spotted, including when and where you saw them. Entries are stored locally on this device
+          so you can build a personal spotting diary.
+        </p>
+      </header>
 
-        <section className="rounded-2xl bg-white p-6 shadow-sm">
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col text-sm font-medium text-slate-700">
-                Registration
-                <input
-                  value={form.registration}
-                  onChange={(event) => handleRegistrationChange(event.target.value)}
-                  className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-base uppercase tracking-wide text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  placeholder="e.g. G-EZTH"
-                  required
-                />
-              </label>
+      <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-8 shadow-2xl shadow-cyan-500/5">
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-slate-300">
+              Registration
+              <input
+                value={form.registration}
+                onChange={(event) => handleRegistrationChange(event.target.value)}
+                className="mt-2 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-base uppercase tracking-wide text-slate-100 shadow-inner shadow-black/20 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
+                placeholder="e.g. G-EZTH"
+                required
+              />
+            </label>
 
-              <div className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                <span>Airline</span>
-                <input
-                  value={form.airline || ""}
-                  readOnly
-                  className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-base text-slate-600"
-                  placeholder={aircraftLoaded ? "Auto-filled from fleet data" : "Loading..."}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-                <span>Aircraft type</span>
-                <input
-                  value={form.type || ""}
-                  readOnly
-                  className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-base text-slate-600"
-                  placeholder={aircraftLoaded ? "Auto-filled from fleet data" : "Loading..."}
-                />
-              </div>
-
-              <label className="flex flex-col text-sm font-medium text-slate-700">
-                Location / Airport
-                <input
-                  value={form.location}
-                  onChange={(event) => setForm((prev) => ({ ...prev, location: event.target.value }))}
-                  className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  placeholder="Where did you spot it?"
-                />
-              </label>
-
-              <label className="flex flex-col text-sm font-medium text-slate-700">
-                Date spotted
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
-                  className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  required
-                />
-              </label>
-
-              <label className="flex flex-col text-sm font-medium text-slate-700 md:col-span-2">
-                Notes
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
-                  className="mt-1 min-h-[96px] rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  placeholder="Add any extra details from the sighting"
-                />
-              </label>
+            <div className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
+              Airline
+              <input
+                value={form.airline || ""}
+                readOnly
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-base text-slate-200"
+                placeholder={aircraftLoaded ? "Auto-filled from fleet data" : "Loading..."}
+              />
             </div>
 
-            <div className="space-y-2 text-sm text-slate-600">
-              {aircraftError ? (
-                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
-                  {aircraftError}
-                </p>
-              ) : matchedAircraft ? (
-                <p className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-800">
-                  Matched {matchedAircraft.airline || "airline"} · {matchedAircraft.type || "type"} from fleet data.
-                </p>
-              ) : aircraftLoaded && form.registration.trim() ? (
-                <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-blue-800">
-                  No fleet data found for this registration. Airline and type will remain blank.
-                </p>
-              ) : null}
+            <div className="flex flex-col gap-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
+              Aircraft type
+              <input
+                value={form.type || ""}
+                readOnly
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-base text-slate-200"
+                placeholder={aircraftLoaded ? "Auto-filled from fleet data" : "Loading..."}
+              />
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-slate-300">
+              Location / Airport
+              <input
+                value={form.location}
+                onChange={(event) => setForm((prev) => ({ ...prev, location: event.target.value }))}
+                className="mt-2 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-base text-slate-100 shadow-inner shadow-black/20 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
+                placeholder="Where did you spot it?"
+              />
+            </label>
 
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-              >
-                Add to logbook
-              </button>
-            </div>
-          </form>
-        </section>
+            <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-slate-300">
+              Date spotted
+              <input
+                type="date"
+                value={form.date}
+                onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
+                className="mt-2 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-base text-slate-100 shadow-inner shadow-black/20 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
+                required
+              />
+            </label>
 
-        <section className="space-y-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-2xl font-semibold text-slate-900">Your sightings</h2>
-            <p className="text-sm text-slate-600">
+            <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-slate-300 md:col-span-2">
+              Notes
+              <textarea
+                value={form.notes}
+                onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
+                className="mt-2 min-h-[96px] rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-base text-slate-100 shadow-inner shadow-black/20 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
+                placeholder="Add any extra details from the sighting"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-2 text-sm text-slate-200">
+            {aircraftError ? (
+              <p className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
+                {aircraftError}
+              </p>
+            ) : matchedAircraft ? (
+              <p className="rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-emerald-100">
+                Matched {matchedAircraft.airline || "airline"} · {matchedAircraft.type || "type"} from fleet data.
+              </p>
+            ) : aircraftLoaded && form.registration.trim() ? (
+              <p className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-cyan-100">
+                No fleet data found for this registration. Airline and type will remain blank.
+              </p>
+            ) : null}
+          </div>
+
+          {error && <p className="text-sm text-red-300">{error}</p>}
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-500/20 px-5 py-2 text-sm font-semibold uppercase tracking-wide text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-400/25"
+            >
+              Add to logbook
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="space-y-4 rounded-3xl border border-white/10 bg-slate-900/70 p-8 shadow-2xl shadow-cyan-500/5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-white">Your sightings</h2>
+            <p className="text-sm text-slate-300">
               {entries.length === 0
                 ? "No entries yet — start logging to build your personal spotting history."
                 : `Tracking ${entries.length} sighting${entries.length === 1 ? "" : "s"}.`}
             </p>
           </div>
+        </div>
 
-          {sortedEntries.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-600">
-              Every time you log an aircraft, it will appear here.
-            </p>
-          ) : (
-            <ul className="space-y-4">
-              {sortedEntries.map((entry) => {
-                const formattedDate = entry.date
-                  ? new Intl.DateTimeFormat(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    }).format(new Date(entry.date))
-                  : "Date unknown";
+        {sortedEntries.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-white/20 bg-white/5 p-6 text-center text-sm text-slate-300">
+            Every time you log an aircraft, it will appear here.
+          </p>
+        ) : (
+          <ul className="space-y-4">
+            {sortedEntries.map((entry) => {
+              const formattedDate = entry.date
+                ? new Intl.DateTimeFormat(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  }).format(new Date(entry.date))
+                : "Date unknown";
 
-                return (
-                  <li key={entry.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-semibold text-slate-900">{entry.registration}</h3>
-                        <dl className="grid gap-1 text-sm text-slate-600">
-                          {entry.airline && (
-                            <div>
-                              <dt className="font-medium text-slate-500">Airline</dt>
-                              <dd>{entry.airline}</dd>
-                            </div>
-                          )}
-                          {entry.type && (
-                            <div>
-                              <dt className="font-medium text-slate-500">Type</dt>
-                              <dd>{entry.type}</dd>
-                            </div>
-                          )}
-                          {entry.location && (
-                            <div>
-                              <dt className="font-medium text-slate-500">Location</dt>
-                              <dd>{entry.location}</dd>
-                            </div>
-                          )}
+              return (
+                <li
+                  key={entry.id}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-5 text-slate-100 shadow-lg shadow-cyan-500/5"
+                >
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="space-y-3">
+                      <h3 className="text-xl font-semibold text-white">{entry.registration}</h3>
+                      <dl className="grid gap-2 text-sm text-slate-200">
+                        {entry.airline && (
                           <div>
-                            <dt className="font-medium text-slate-500">Date spotted</dt>
-                            <dd>{formattedDate}</dd>
+                            <dt className="font-semibold text-slate-300">Airline</dt>
+                            <dd>{entry.airline}</dd>
                           </div>
-                        </dl>
-                        {entry.notes && <p className="text-sm text-slate-600">{entry.notes}</p>}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(entry.id)}
-                        className="self-start rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200"
-                        aria-label={`Remove ${entry.registration} from logbook`}
-                      >
-                        Remove entry
-                      </button>
+                        )}
+                        {entry.type && (
+                          <div>
+                            <dt className="font-semibold text-slate-300">Type</dt>
+                            <dd>{entry.type}</dd>
+                          </div>
+                        )}
+                        {entry.location && (
+                          <div>
+                            <dt className="font-semibold text-slate-300">Location</dt>
+                            <dd>{entry.location}</dd>
+                          </div>
+                        )}
+                        <div>
+                          <dt className="font-semibold text-slate-300">Date spotted</dt>
+                          <dd>{formattedDate}</dd>
+                        </div>
+                      </dl>
+                      {entry.notes && <p className="text-sm text-slate-200">{entry.notes}</p>}
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-      </div>
-    </main>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(entry.id)}
+                      className="self-start rounded-full border border-red-400/40 bg-red-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:border-red-300/60 hover:bg-red-500/20"
+                      aria-label={`Remove ${entry.registration} from logbook`}
+                    >
+                      Remove entry
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </PageWrapper>
   );
 }
