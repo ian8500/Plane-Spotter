@@ -40,6 +40,7 @@ class AircraftViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 class UserSeenViewSet(viewsets.ModelViewSet):
+    queryset = UserSeen.objects.none()
     serializer_class = UserSeenSerializer
     permission_classes = [permissions.IsAuthenticated]
 
