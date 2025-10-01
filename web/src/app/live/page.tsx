@@ -1,0 +1,296 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import maplibregl, { NavigationControl, Popup } from "maplibre-gl";
+import type { Map, Marker, StyleSpecification } from "maplibre-gl";
+import type { FlightState } from "../api/adsb/route";
+
+const SECTIONAL_STYLE: StyleSpecification = {
+  version: 8,
+  name: "Sectional Chart",
+  sources: {
+    sectional: {
+      type: "raster",
+      tiles: [
+        "https://wms.chartbundle.com/tms/v1.0/sectional/{z}/{x}/{y}.png?opt=hires",
+      ],
+      tileSize: 256,
+      attribution: "Charts © ChartBundle / FAA",
+    },
+  },
+  layers: [
+    {
+      id: "background",
+      type: "background",
+      paint: {
+        "background-color": "#03162a",
+      },
+    },
+    {
+      id: "sectional",
+      type: "raster",
+      source: "sectional",
+      minzoom: 4,
+      maxzoom: 13,
+      paint: {
+        "raster-brightness-min": 0.35,
+        "raster-brightness-max": 0.95,
+        "raster-saturation": -0.15,
+      },
+    },
+  ],
+};
+
+type MarkerRecord = {
+  marker: Marker;
+  label: HTMLSpanElement;
+};
+
+const INITIAL_CENTER: [number, number] = [-0.4543, 51.4706];
+const REFRESH_INTERVAL_MS = 15000;
+
+function renderPopup(flight: FlightState) {
+  const { callsign, origin, destination, alt, speed, heading } = flight;
+  return `
+    <div class="adsb-popup">
+      <div class="adsb-popup__title">${callsign || flight.id}</div>
+      <div class="adsb-popup__meta">${origin} ➞ ${destination}</div>
+      <div class="adsb-popup__meta">Alt ${alt.toLocaleString()} ft · ${speed} kt · HDG ${Math.round(heading)}°</div>
+    </div>
+  `;
+}
+
+export default function LiveAdsbPage() {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<Map | null>(null);
+  const markersRef = useRef<Map<string, MarkerRecord>>(new Map());
+  const intervalRef = useRef<number | null>(null);
+
+  const [flights, setFlights] = useState<FlightState[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const headerStats = useMemo(() => {
+    if (!flights.length) {
+      return "No traffic in range";
+    }
+
+    const averageAltitude = Math.round(
+      flights.reduce((sum, flight) => sum + flight.alt, 0) / flights.length,
+    );
+    return `${flights.length} aircraft tracked · Avg ${averageAltitude.toLocaleString()} ft`;
+  }, [flights]);
+
+  const updateMarkers = useCallback(
+    (newFlights: FlightState[]) => {
+      if (!mapRef.current) return;
+      const seen = new Set<string>();
+
+      newFlights.forEach((flight) => {
+        const id = flight.id;
+        const position: [number, number] = [flight.lon, flight.lat];
+        const existing = markersRef.current.get(id);
+
+        if (existing) {
+          existing.marker.setLngLat(position).setRotation(flight.heading);
+          existing.label.textContent = flight.callsign || id;
+          existing.marker.getPopup()?.setHTML(renderPopup(flight));
+          seen.add(id);
+          return;
+        }
+
+        const markerElement = document.createElement("div");
+        markerElement.className = "adsb-marker";
+        const arrow = document.createElement("div");
+        arrow.className = "adsb-marker__arrow";
+        const label = document.createElement("span");
+        label.className = "adsb-marker__label";
+        label.textContent = flight.callsign || id;
+
+        markerElement.appendChild(arrow);
+        markerElement.appendChild(label);
+
+        const popup = new Popup({ offset: 18, closeButton: false }).setHTML(
+          renderPopup(flight),
+        );
+
+        const marker = new maplibregl.Marker({
+          element: markerElement,
+          rotationAlignment: "map",
+          pitchAlignment: "map",
+        })
+          .setLngLat(position)
+          .setRotation(flight.heading)
+          .setPopup(popup)
+          .addTo(mapRef.current);
+
+        markersRef.current.set(id, { marker, label });
+        seen.add(id);
+      });
+
+      markersRef.current.forEach((record, id) => {
+        if (!seen.has(id)) {
+          record.marker.remove();
+          markersRef.current.delete(id);
+        }
+      });
+    },
+    [],
+  );
+
+  const fetchFlights = useCallback(async () => {
+    if (!mapRef.current) {
+      return;
+    }
+
+    try {
+      const bounds = mapRef.current.getBounds();
+      const params = new URLSearchParams({
+        minLat: bounds.getSouth().toFixed(4),
+        maxLat: bounds.getNorth().toFixed(4),
+        minLon: bounds.getWest().toFixed(4),
+        maxLon: bounds.getEast().toFixed(4),
+      });
+
+      const response = await fetch(`/api/adsb?${params.toString()}`, {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error(`ADS-B request failed: ${response.status}`);
+      }
+
+      const payload = (await response.json()) as {
+        flights: FlightState[];
+        generatedAt: string;
+      };
+
+      setFlights(payload.flights);
+      setLastUpdated(payload.generatedAt);
+      updateMarkers(payload.flights);
+      setIsLoading(false);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to load live traffic";
+      setError(message);
+      setIsLoading(false);
+    }
+  }, [updateMarkers]);
+
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) {
+      return;
+    }
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: SECTIONAL_STYLE,
+      center: INITIAL_CENTER,
+      zoom: 7.2,
+      pitch: 35,
+      bearing: -15,
+      hash: false,
+    });
+
+    mapRef.current = map;
+
+    map.addControl(new NavigationControl({ visualizePitch: true }), "top-left");
+
+    map.on("load", () => {
+      fetchFlights();
+      map.on("moveend", fetchFlights);
+      intervalRef.current = window.setInterval(fetchFlights, REFRESH_INTERVAL_MS);
+    });
+
+    const markers = markersRef.current;
+
+    return () => {
+      map.off("moveend", fetchFlights);
+      markers.forEach(({ marker }) => marker.remove());
+      markers.clear();
+      markersRef.current = new Map();
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [fetchFlights]);
+
+  const formattedTimestamp = useMemo(() => {
+    if (!lastUpdated) return null;
+    const timestamp = new Date(lastUpdated);
+    if (Number.isNaN(timestamp.valueOf())) {
+      return null;
+    }
+    return `${timestamp.toLocaleTimeString()} local`;
+  }, [lastUpdated]);
+
+  return (
+    <main className="relative min-h-screen bg-[#020c19] text-sky-100">
+      <div className="pointer-events-none absolute inset-0 bg-[url('/textures/aviation-chart.svg')] bg-cover opacity-20" />
+      <div className="relative z-10 flex min-h-screen flex-col gap-6 px-4 pb-10 pt-6 lg:flex-row lg:px-8">
+        <section className="flex-1 rounded-3xl border border-sky-900/40 bg-slate-950/50 p-6 shadow-2xl shadow-sky-900/40 backdrop-blur-xl">
+          <header className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-sky-400">Live ADS-B</p>
+              <h1 className="text-3xl font-semibold text-sky-100 md:text-4xl">Traffic Radar</h1>
+            </div>
+            <div className="text-sm text-sky-200/80">
+              {formattedTimestamp ? `Updated ${formattedTimestamp}` : "Awaiting data"}
+            </div>
+          </header>
+          <p className="mb-4 text-sm text-sky-200/80">{headerStats}</p>
+          <div
+            ref={mapContainerRef}
+            className="h-[60vh] w-full overflow-hidden rounded-2xl border border-sky-800/60 shadow-xl shadow-sky-900/40 lg:h-[75vh]"
+          />
+          {error && (
+            <div className="mt-4 rounded-xl border border-rose-400/50 bg-rose-950/40 px-4 py-3 text-sm text-rose-100">
+              {error}
+            </div>
+          )}
+        </section>
+        <aside className="max-h-[75vh] w-full rounded-3xl border border-sky-900/40 bg-slate-950/60 p-6 shadow-xl shadow-sky-900/40 backdrop-blur-xl lg:w-[360px]">
+          <h2 className="text-xl font-semibold text-sky-100">Aircraft Details</h2>
+          <p className="mb-4 text-xs uppercase tracking-[0.3em] text-sky-400">Sorted by altitude</p>
+          <div className="grid grid-cols-1 gap-3 overflow-y-auto pr-1" style={{ maxHeight: "calc(75vh - 4rem)" }}>
+            {isLoading && !flights.length ? (
+              <div className="rounded-xl border border-sky-800/50 bg-slate-900/70 px-4 py-6 text-center text-sm text-sky-200/70">
+                Initializing ADS-B feed…
+              </div>
+            ) : flights.length ? (
+              [...flights]
+                .sort((a, b) => b.alt - a.alt)
+                .map((flight) => (
+                  <article
+                    key={flight.id}
+                    className="rounded-2xl border border-sky-800/60 bg-slate-900/70 px-4 py-3 text-sm text-sky-100 shadow-inner shadow-sky-900/40"
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-base font-semibold text-sky-100">{flight.callsign || flight.id}</span>
+                      <span className="text-xs text-sky-300/80">{Math.round(flight.speed)} kt</span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-sky-200/70">
+                      <span>{flight.origin} ➞ {flight.destination}</span>
+                      <span>FL{Math.round(flight.alt / 100)}</span>
+                      <span>HDG {Math.round(flight.heading)}°</span>
+                    </div>
+                    <div className="mt-1 text-xs text-sky-200/50">
+                      {flight.lat.toFixed(2)}°, {flight.lon.toFixed(2)}°
+                    </div>
+                  </article>
+                ))
+            ) : (
+              <div className="rounded-xl border border-sky-800/50 bg-slate-900/70 px-4 py-6 text-center text-sm text-sky-200/70">
+                No aircraft within the current map view.
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+    </main>
+  );
+}
