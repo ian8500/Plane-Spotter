@@ -26,7 +26,7 @@ struct ContentView: View {
             HomeSection(title: "Airports", subtitle: "Spotting locations, reviews & photos", systemImage: "airplane.departure", destination: .airports, accent: .blue),
             HomeSection(title: "Frequencies", subtitle: "ATC communication primer", systemImage: "dot.radiowaves.left.and.right", destination: .frequencyGuide, accent: .purple),
             HomeSection(title: "Maps", subtitle: "Visualise airfields on a map", systemImage: "map", destination: .map, accent: .green),
-            HomeSection(title: "Live ADS-B", subtitle: "Track aircraft near favourite airports", systemImage: "radar", destination: .live, accent: .orange),
+            HomeSection(title: "Live ADS-B", subtitle: "Track active aircraft and filter by registration", systemImage: "radar", destination: .live, accent: .orange),
             HomeSection(title: "Logbook", subtitle: "Record aircraft you’ve spotted", systemImage: "note.text", destination: .logbook, accent: .teal),
             HomeSection(title: "Community", subtitle: "Forum, chat & badges", systemImage: "person.3", destination: .community, accent: .pink)
         ]
@@ -81,7 +81,8 @@ struct ContentView: View {
                     AirportMapView()
                         .environmentObject(environment)
                 case .live:
-                    PlaceholderView(title: "Live ADS-B", message: "Integration with a real-time ADS-B provider can surface nearby aircraft. Add your API credentials and rendering logic here.")
+                    LiveFleetView()
+                        .environmentObject(environment)
                 case .logbook:
                     PlaceholderView(title: "Logbook", message: "Connect to the /api/seen/ endpoint to sync spotted aircraft and maintain a personal logbook.")
                 case .community:

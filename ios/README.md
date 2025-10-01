@@ -9,7 +9,8 @@ This directory contains a native SwiftUI implementation of the Plane Spotter cli
 - Airport detail view that renders frequencies, spotting locations, and external resources with native styling and a MapKit preview.
 - Map view that plots all airports and lets you jump between them with animated camera transitions.
 - Frequency learning guide with rich text cards.
-- Placeholder screens for Live ADS-B, Logbook, and Community to highlight the API integration points that still need to be built.
+- Live ADS-B browser that streams the latest fleet data from the Django backend with filtering controls.
+- Placeholder screens for Logbook and Community to highlight the API integration points that still need to be built.
 
 ## Getting started
 
@@ -28,9 +29,13 @@ python manage.py runserver 0.0.0.0:8000
 
 Ensure your simulator can reach the backend host. When running inside Docker, replace `localhost` with your machine IP and update `API_BASE_URL` accordingly.
 
+### Live ADS-B feed configuration
+
+The Live ADS-B tab calls the `/api/fleet/live/` endpoint, which proxies the OpenSky aircraft metadata CSV. Override `AIRCRAFT_FEED_URL` in `backend/.env` if you prefer a different data source and ensure the Django server has network access.
+
 ## Extending the app
 
-- **Live ADS-B**: integrate with a live data provider (e.g. ADSBExchange) and present aircraft overlays in a dedicated view.
+- **Live ADS-B**: extend the list to include richer visuals such as a map overlay or sorting/grouping controls. The view already consumes the `/api/fleet/live/` endpoint and can be themed further.
 - **Logbook sync**: call the `/api/seen/` endpoint using authenticated requests to keep a local spotting log.
 - **Community**: wire up `/api/posts/`, `/api/comments/`, and `/api/badges/` to deliver social features.
 - **Offline caching**: wrap the networking layer with persistence to support offline browsing when at the airport.
