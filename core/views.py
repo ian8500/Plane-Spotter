@@ -1,8 +1,12 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .models import Airport, Frequency, SpottingLocation, Photo, Aircraft, UserSeen, Post, Comment, Badge, UserBadge
 from .serializers import (AirportSerializer, FrequencySerializer, SpottingLocationSerializer, PhotoSerializer,
                           AircraftSerializer, UserSeenSerializer, PostSerializer, CommentSerializer,
                           BadgeSerializer, UserBadgeSerializer)
+from .services.aircraft_feed import AircraftFeedError, fetch_live_fleet
 
 class AirportViewSet(viewsets.ModelViewSet):
     """Expose airports with their related frequencies and spotting locations."""
@@ -59,4 +63,39 @@ class UserBadgeViewSet(viewsets.ModelViewSet):
     queryset = UserBadge.objects.all()
     serializer_class = UserBadgeSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class LiveFleetView(APIView):
+    """Expose a live view of the global aircraft fleet using the configured feed."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        params = request.query_params
+        registration = params.get("registration")
+        country = params.get("country")
+        try:
+            limit = int(params.get("limit", 0) or 0)
+        except ValueError:
+            return Response({"detail": "limit must be numeric"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            results = fetch_live_fleet(
+                registration=registration,
+                country=country,
+                limit=limit or None,
+            )
+        except AircraftFeedError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        return Response(
+            {
+                "count": len(results),
+                "results": results,
+                "filters": {
+                    "registration": registration,
+                    "country": country,
+                },
+            }
+        )
 
