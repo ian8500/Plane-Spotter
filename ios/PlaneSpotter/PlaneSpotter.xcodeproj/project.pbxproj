@@ -1,0 +1,351 @@
+// !$*UTF8*$!
+{
+    archiveVersion = 1;
+    classes = {};
+    objectVersion = 55;
+    objects = {
+    3A5A40EBC16B56CAA9A1C1BF /* PlaneSpotterApp.swift in Sources */ = { isa = PBXBuildFile; fileRef = F2C1C00447315A6FA3FDD661 /* PlaneSpotterApp.swift */; };
+    B75C3FE1F2D258A39287054F /* ContentView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 0BB4C62A97EA5BC0B2318CE6 /* ContentView.swift */; };
+    6BD086F395E9594883E2FA2B /* Airport.swift in Sources */ = { isa = PBXBuildFile; fileRef = EF37EA1A1F8E5F3596A917BE /* Airport.swift */; };
+    1421403612055BCFA2E0E9EC /* APIClient.swift in Sources */ = { isa = PBXBuildFile; fileRef = 2532A5C86B5D572B8E33B012 /* APIClient.swift */; };
+    02DD320406E85FEFBA224C10 /* AirportListViewModel.swift in Sources */ = { isa = PBXBuildFile; fileRef = B0E9DD5D5CF95460BE0F3A39 /* AirportListViewModel.swift */; };
+    32186F235AE6519B907413BF /* AirportDetailViewModel.swift in Sources */ = { isa = PBXBuildFile; fileRef = 6FDA9530B3FF5999BF3EDB2C /* AirportDetailViewModel.swift */; };
+    BF2A83B98D30532CB7835576 /* AirportListView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 2793A622C23A54B9B1770EE1 /* AirportListView.swift */; };
+    7D58661ABE2F55D0800DDD6E /* AirportRowView.swift in Sources */ = { isa = PBXBuildFile; fileRef = F38AAFF55EA4591CB02EEA0E /* AirportRowView.swift */; };
+    3DDF64D63D1D517BA9DB4F19 /* AirportDetailView.swift in Sources */ = { isa = PBXBuildFile; fileRef = FE634B60639B5588B47CE3A1 /* AirportDetailView.swift */; };
+    4A8463233A8A517895138350 /* ResourceTagView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 2D919A5171B95B958FC41B4F /* ResourceTagView.swift */; };
+    B741AD8CA58B5C4F96409673 /* PlaceholderView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 7897B666E43758EB97F765E3 /* PlaceholderView.swift */; };
+    9805E27A31F753C8B085CA34 /* FrequencyGuideView.swift in Sources */ = { isa = PBXBuildFile; fileRef = DADF21BC74B85CB39F55B621 /* FrequencyGuideView.swift */; };
+    EF3B99279F345D1F9C58F9AA /* AirportMapView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 975C11955D8D5A26B2BC3AC3 /* AirportMapView.swift */; };
+    D50C61EDD0D85C72A1A3BB2D /* LoadingView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 287D4DA01F115ED8A457531A /* LoadingView.swift */; };
+    C3674712E8E058248D65130B /* ErrorView.swift in Sources */ = { isa = PBXBuildFile; fileRef = 4089724706095F379021B3A0 /* ErrorView.swift */; };
+    BAA43D424EAE5AE88F066513 /* AppEnvironment.swift in Sources */ = { isa = PBXBuildFile; fileRef = 7588B2FB879A58A5BD7E4634 /* AppEnvironment.swift */; };
+    2F9957ABC6A45A59BDC1C681 /* AppEnvironment+Preview.swift in Sources */ = { isa = PBXBuildFile; fileRef = ACDDFD01F8DF55E9BEA70894 /* AppEnvironment+Preview.swift */; };
+    EFE877B9A7BF5C8493A151A7 /* Assets.xcassets in Resources */ = { isa = PBXBuildFile; fileRef = C0A54AFA5FC55138A4D4A2F6 /* Assets.xcassets */; };
+    65643599E0995BF3984EEF2A /* Info.plist */ = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+    F2C1C00447315A6FA3FDD661 /* PlaneSpotterApp.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/PlaneSpotterApp.swift; sourceTree = "<group>"; };
+    0BB4C62A97EA5BC0B2318CE6 /* ContentView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/ContentView.swift; sourceTree = "<group>"; };
+    EF37EA1A1F8E5F3596A917BE /* Airport.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Models/Airport.swift; sourceTree = "<group>"; };
+    2532A5C86B5D572B8E33B012 /* APIClient.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Networking/APIClient.swift; sourceTree = "<group>"; };
+    B0E9DD5D5CF95460BE0F3A39 /* AirportListViewModel.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/ViewModels/AirportListViewModel.swift; sourceTree = "<group>"; };
+    6FDA9530B3FF5999BF3EDB2C /* AirportDetailViewModel.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/ViewModels/AirportDetailViewModel.swift; sourceTree = "<group>"; };
+    2793A622C23A54B9B1770EE1 /* AirportListView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Views/AirportListView.swift; sourceTree = "<group>"; };
+    F38AAFF55EA4591CB02EEA0E /* AirportRowView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Views/AirportRowView.swift; sourceTree = "<group>"; };
+    FE634B60639B5588B47CE3A1 /* AirportDetailView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Views/AirportDetailView.swift; sourceTree = "<group>"; };
+    2D919A5171B95B958FC41B4F /* ResourceTagView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Views/ResourceTagView.swift; sourceTree = "<group>"; };
+    7897B666E43758EB97F765E3 /* PlaceholderView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Views/PlaceholderView.swift; sourceTree = "<group>"; };
+    DADF21BC74B85CB39F55B621 /* FrequencyGuideView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Views/FrequencyGuideView.swift; sourceTree = "<group>"; };
+    975C11955D8D5A26B2BC3AC3 /* AirportMapView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Views/AirportMapView.swift; sourceTree = "<group>"; };
+    287D4DA01F115ED8A457531A /* LoadingView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Components/LoadingView.swift; sourceTree = "<group>"; };
+    4089724706095F379021B3A0 /* ErrorView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Components/ErrorView.swift; sourceTree = "<group>"; };
+    7588B2FB879A58A5BD7E4634 /* AppEnvironment.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Utilities/AppEnvironment.swift; sourceTree = "<group>"; };
+    ACDDFD01F8DF55E9BEA70894 /* AppEnvironment+Preview.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaneSpotter/Utilities/AppEnvironment+Preview.swift; sourceTree = "<group>"; };
+    C0A54AFA5FC55138A4D4A2F6 /* Assets.xcassets */ = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = PlaneSpotter/Assets.xcassets; sourceTree = "<group>"; };
+    33D8A06D23175CCAA075A162 /* PlaneSpotter.app */ = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PlaneSpotter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+    
+13B49D253AB1579AB747FE43 /* Components */ = {
+    isa = PBXGroup;
+    children = (
+        4089724706095F379021B3A0 /* ErrorView.swift */,
+        287D4DA01F115ED8A457531A /* LoadingView.swift */
+    );
+    path = Components;
+    sourceTree = "<group>";
+};
+
+    
+AA616EE50AC15C21A92CAC2D /* Models */ = {
+    isa = PBXGroup;
+    children = (
+        EF37EA1A1F8E5F3596A917BE /* Airport.swift */
+    );
+    path = Models;
+    sourceTree = "<group>";
+};
+
+    
+8CC85BA63B7F507486B888E5 /* Networking */ = {
+    isa = PBXGroup;
+    children = (
+        2532A5C86B5D572B8E33B012 /* APIClient.swift */
+    );
+    path = Networking;
+    sourceTree = "<group>";
+};
+
+    
+4EFB3B35C06859C9975C98D5 /* Utilities */ = {
+    isa = PBXGroup;
+    children = (
+        7588B2FB879A58A5BD7E4634 /* AppEnvironment.swift */,
+        ACDDFD01F8DF55E9BEA70894 /* AppEnvironment+Preview.swift */
+    );
+    path = Utilities;
+    sourceTree = "<group>";
+};
+
+    
+612276449B6851E2A7406D9D /* ViewModels */ = {
+    isa = PBXGroup;
+    children = (
+        B0E9DD5D5CF95460BE0F3A39 /* AirportListViewModel.swift */,
+        6FDA9530B3FF5999BF3EDB2C /* AirportDetailViewModel.swift */
+    );
+    path = ViewModels;
+    sourceTree = "<group>";
+};
+
+    
+32E4E15EBF9D52A38AC6C07D /* Views */ = {
+    isa = PBXGroup;
+    children = (
+        2793A622C23A54B9B1770EE1 /* AirportListView.swift */,
+        F38AAFF55EA4591CB02EEA0E /* AirportRowView.swift */,
+        FE634B60639B5588B47CE3A1 /* AirportDetailView.swift */,
+        2D919A5171B95B958FC41B4F /* ResourceTagView.swift */,
+        7897B666E43758EB97F765E3 /* PlaceholderView.swift */,
+        DADF21BC74B85CB39F55B621 /* FrequencyGuideView.swift */,
+        975C11955D8D5A26B2BC3AC3 /* AirportMapView.swift */
+    );
+    path = Views;
+    sourceTree = "<group>";
+};
+
+    
+0F8DD1F09E9A597196C9AB70 /* PlaneSpotter */ = {
+    isa = PBXGroup;
+    children = (
+        F2C1C00447315A6FA3FDD661 /* PlaneSpotterApp.swift */,
+        0BB4C62A97EA5BC0B2318CE6 /* ContentView.swift */,
+        13B49D253AB1579AB747FE43 /* Components */,
+        AA616EE50AC15C21A92CAC2D /* Models */,
+        8CC85BA63B7F507486B888E5 /* Networking */,
+        4EFB3B35C06859C9975C98D5 /* Utilities */,
+        612276449B6851E2A7406D9D /* ViewModels */,
+        32E4E15EBF9D52A38AC6C07D /* Views */,
+        C0A54AFA5FC55138A4D4A2F6 /* Assets.xcassets */,
+        65643599E0995BF3984EEF2A /* Info.plist */
+    );
+    path = PlaneSpotter;
+    sourceTree = "<group>";
+};
+
+    
+5F8C4730DFA95DEE87415D38 /* Products */ = {
+    isa = PBXGroup;
+    children = (
+        33D8A06D23175CCAA075A162 /* PlaneSpotter.app */
+    );
+    name = Products;
+    sourceTree = "<group>";
+};
+
+    
+45C3A64478D15A1BB7E279C0 = {
+    isa = PBXGroup;
+    children = (
+        0F8DD1F09E9A597196C9AB70 /* PlaneSpotter */,
+        5F8C4730DFA95DEE87415D38 /* Products */
+    );
+    sourceTree = "<group>";
+};
+
+    
+4D205C4C799E5A4F87082E05 /* Sources */ = {
+    isa = PBXSourcesBuildPhase;
+    buildActionMask = 2147483647;
+    files = (
+        3A5A40EBC16B56CAA9A1C1BF,
+        B75C3FE1F2D258A39287054F,
+        6BD086F395E9594883E2FA2B,
+        1421403612055BCFA2E0E9EC,
+        02DD320406E85FEFBA224C10,
+        32186F235AE6519B907413BF,
+        BF2A83B98D30532CB7835576,
+        7D58661ABE2F55D0800DDD6E,
+        3DDF64D63D1D517BA9DB4F19,
+        4A8463233A8A517895138350,
+        B741AD8CA58B5C4F96409673,
+        9805E27A31F753C8B085CA34,
+        EF3B99279F345D1F9C58F9AA,
+        D50C61EDD0D85C72A1A3BB2D,
+        C3674712E8E058248D65130B,
+        BAA43D424EAE5AE88F066513,
+        2F9957ABC6A45A59BDC1C681
+    );
+    runOnlyForDeploymentPostprocessing = 0;
+};
+
+    
+C7FD5529B5A550E98BFBE368 /* Frameworks */ = {
+    isa = PBXFrameworksBuildPhase;
+    buildActionMask = 2147483647;
+    files = (
+    );
+    runOnlyForDeploymentPostprocessing = 0;
+};
+
+    
+434197D49AB6596DA7710A01 /* Resources */ = {
+    isa = PBXResourcesBuildPhase;
+    buildActionMask = 2147483647;
+    files = (
+        EFE877B9A7BF5C8493A151A7
+    );
+    runOnlyForDeploymentPostprocessing = 0;
+};
+
+    
+F4CE289E12215AE7B0E326C7 /* PlaneSpotter */ = {
+    isa = PBXNativeTarget;
+    buildConfigurationList = A842DBCDF1685C9893C575CE /* Build configuration list for PBXNativeTarget "PlaneSpotter" */;
+    buildPhases = (
+        4D205C4C799E5A4F87082E05 /* Sources */,
+        C7FD5529B5A550E98BFBE368 /* Frameworks */,
+        434197D49AB6596DA7710A01 /* Resources */,
+    );
+    buildRules = (
+    );
+    dependencies = (
+    );
+    name = PlaneSpotter;
+    productName = PlaneSpotter;
+    productReference = 33D8A06D23175CCAA075A162 /* PlaneSpotter.app */;
+    productType = "com.apple.product-type.application";
+};
+
+    
+A400E5D704095A8190503991 /* Project object */ = {
+    isa = PBXProject;
+    attributes = {
+        LastSwiftUpdateCheck = 1520;
+        LastUpgradeCheck = 1520;
+        TargetAttributes = {
+            F4CE289E12215AE7B0E326C7 = {
+                DevelopmentTeam = "";
+                ProvisioningStyle = Manual;
+            };
+        };
+    };
+    buildConfigurationList = 285D8075BDB052768E52F298 /* Build configuration list for PBXProject "PlaneSpotter" */;
+    compatibilityVersion = "Xcode 14.0";
+    developmentRegion = en;
+    hasScannedForEncodings = 0;
+    knownRegions = (
+        en,
+        Base,
+    );
+    mainGroup = 45C3A64478D15A1BB7E279C0;
+    productRefGroup = 5F8C4730DFA95DEE87415D38 /* Products */;
+    projectDirPath = "";
+    projectRoot = "";
+    targets = (
+        F4CE289E12215AE7B0E326C7 /* PlaneSpotter */,
+    );
+};
+
+    
+1A53D24CE6BE5EF9BAA534E7 /* Debug */ = {
+    isa = XCBuildConfiguration;
+    buildSettings = {
+        CLANG_ANALYZER_NONNULL = YES;
+        ENABLE_TESTABILITY = YES;
+        GCC_C_LANGUAGE_STANDARD = gnu17;
+        GCC_NO_COMMON_BLOCKS = YES;
+        GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+        GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+        GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+        GCC_WARN_UNUSED_FUNCTION = YES;
+        GCC_WARN_UNUSED_VARIABLE = YES;
+        IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+        MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+        ONLY_ACTIVE_ARCH = YES;
+        SDKROOT = iphoneos;
+    };
+    name = Debug;
+};
+
+    
+C7725D25863F58ACB190CBAF /* Release */ = {
+    isa = XCBuildConfiguration;
+    buildSettings = {
+        CLANG_ANALYZER_NONNULL = YES;
+        GCC_C_LANGUAGE_STANDARD = gnu17;
+        GCC_NO_COMMON_BLOCKS = YES;
+        GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+        GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+        GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+        GCC_WARN_UNUSED_FUNCTION = YES;
+        GCC_WARN_UNUSED_VARIABLE = YES;
+        IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+        MTL_ENABLE_DEBUG_INFO = NO;
+        SDKROOT = iphoneos;
+    };
+    name = Release;
+};
+
+    
+285D8075BDB052768E52F298 /* Build configuration list for PBXProject "PlaneSpotter" */ = {
+    isa = XCConfigurationList;
+    buildConfigurations = (
+        1A53D24CE6BE5EF9BAA534E7 /* Debug */,
+        C7725D25863F58ACB190CBAF /* Release */,
+    );
+    defaultConfigurationIsVisible = 0;
+    defaultConfigurationName = Release;
+};
+
+    
+498877A5735F57F7982B845F /* Debug */ = {
+    isa = XCBuildConfiguration;
+    buildSettings = {
+        ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+        CODE_SIGN_STYLE = Manual;
+        DEVELOPMENT_TEAM = "";
+        GENERATE_INFOPLIST_FILE = NO;
+        INFOPLIST_FILE = PlaneSpotter/Info.plist;
+        IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+        LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+        PRODUCT_BUNDLE_IDENTIFIER = com.example.Planespotter;
+        PRODUCT_NAME = "$(TARGET_NAME)";
+        SWIFT_EMIT_LOC_STRINGS = YES;
+        SWIFT_VERSION = 5.9;
+        TARGETED_DEVICE_FAMILY = "1,2";
+    };
+    name = Debug;
+};
+
+    
+A7D2CAA6B1965DA199E900B4 /* Release */ = {
+    isa = XCBuildConfiguration;
+    buildSettings = {
+        ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+        CODE_SIGN_STYLE = Manual;
+        DEVELOPMENT_TEAM = "";
+        GENERATE_INFOPLIST_FILE = NO;
+        INFOPLIST_FILE = PlaneSpotter/Info.plist;
+        IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+        LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+        PRODUCT_BUNDLE_IDENTIFIER = com.example.Planespotter;
+        PRODUCT_NAME = "$(TARGET_NAME)";
+        SWIFT_EMIT_LOC_STRINGS = YES;
+        SWIFT_VERSION = 5.9;
+        TARGETED_DEVICE_FAMILY = "1,2";
+    };
+    name = Release;
+};
+
+    
+A842DBCDF1685C9893C575CE /* Build configuration list for PBXNativeTarget "PlaneSpotter" */ = {
+    isa = XCConfigurationList;
+    buildConfigurations = (
+        498877A5735F57F7982B845F /* Debug */,
+        A7D2CAA6B1965DA199E900B4 /* Release */,
+    );
+    defaultConfigurationIsVisible = 0;
+    defaultConfigurationName = Release;
+};
+
+    };
+    rootObject = A400E5D704095A8190503991 /* Project object */;
+}
