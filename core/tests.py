@@ -2,9 +2,11 @@ import io
 from unittest import mock
 
 from django.core.cache import cache
-from django.test import SimpleTestCase, override_settings
+from django.core.management import call_command
+from django.test import SimpleTestCase, TestCase, override_settings
 from rest_framework.test import APIRequestFactory
 
+from .models import Aircraft
 from .services import aircraft_feed
 
 
@@ -98,3 +100,105 @@ class LiveFleetViewTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.data["detail"], "network down")
+
+
+class SyncAircraftDatabaseTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def test_sync_creates_and_updates_records(self):
+        first_payload = [
+            {
+                "registration": "G-EZTH",
+                "model": "A320-214",
+                "type_code": "A320",
+                "operator": "EasyJet",
+                "country": "United Kingdom",
+            },
+            {
+                "registration": "N12345",
+                "model": "737-8H4",
+                "type_code": "B738",
+                "operator": "Southwest Airlines",
+                "country": "United States",
+            },
+        ]
+
+        with mock.patch.object(aircraft_feed, "fetch_live_fleet", return_value=first_payload):
+            summary = aircraft_feed.sync_aircraft_database(use_cache=False)
+
+        self.assertEqual(summary["created"], 2)
+        self.assertEqual(summary["updated"], 0)
+        self.assertEqual(Aircraft.objects.count(), 2)
+
+        updated_payload = [
+            {
+                "registration": "G-EZTH",
+                "model": "A320-214",
+                "operator": "easyJet Airline Company Limited",
+                "country": "United Kingdom",
+            },
+            {
+                "registration": "N12345",
+                "model": "737-8H4",
+                "type_code": "B738",
+                "operator": "Southwest Airlines",
+                "country": "USA",
+            },
+        ]
+
+        with mock.patch.object(aircraft_feed, "fetch_live_fleet", return_value=updated_payload):
+            summary = aircraft_feed.sync_aircraft_database(use_cache=False)
+
+        self.assertEqual(summary["created"], 0)
+        self.assertEqual(summary["updated"], 2)
+        updated_aircraft = Aircraft.objects.get(registration="G-EZTH")
+        self.assertEqual(updated_aircraft.airline, "easyJet Airline Company Limited")
+
+    def test_sync_prunes_missing_records(self):
+        Aircraft.objects.create(
+            registration="OLD123",
+            type="A320",
+            airline="Old Airline",
+            country="UK",
+        )
+
+        payload = [
+            {
+                "registration": "NEW999",
+                "model": "A350-900",
+                "operator": "Futuristic Air",
+                "country": "United Kingdom",
+            }
+        ]
+
+        with mock.patch.object(aircraft_feed, "fetch_live_fleet", return_value=payload):
+            summary = aircraft_feed.sync_aircraft_database(use_cache=False, prune=True)
+
+        self.assertEqual(summary["removed"], 1)
+        self.assertFalse(Aircraft.objects.filter(registration="OLD123").exists())
+        self.assertTrue(Aircraft.objects.filter(registration="NEW999").exists())
+
+
+class SyncAircraftCommandTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def test_management_command_outputs_summary(self):
+        payload = [
+            {
+                "registration": "F-HSUN",
+                "model": "A321neo",
+                "operator": "Sunshine Air",
+                "country": "France",
+            }
+        ]
+
+        with mock.patch.object(aircraft_feed, "fetch_live_fleet", return_value=payload):
+            out = io.StringIO()
+            call_command("sync_aircraft_database", stdout=out)
+
+        output = out.getvalue()
+        self.assertIn("Processed 1 aircraft records.", output)
+        self.assertIn("Created: 1, Updated: 0", output)
+        self.assertTrue(Aircraft.objects.filter(registration="F-HSUN").exists())

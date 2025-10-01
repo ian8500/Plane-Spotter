@@ -4,16 +4,23 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 import urllib.request
 from dataclasses import dataclass
-from typing import Dict, Iterable, Iterator, List, Optional
+from typing import Dict, Iterable, Iterator, List, Optional, Set
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
+
+from core.models import Aircraft
 
 
 class AircraftFeedError(RuntimeError):
     """Raised when a live aircraft feed cannot be retrieved."""
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -137,4 +144,86 @@ def fetch_live_fleet(
         cache.set(cache_key, matches, settings.AIRCRAFT_FEED_CACHE_SECONDS)
 
     return matches
+
+
+def _trim(value: Optional[str], *, max_length: int) -> str:
+    return (value or "").strip()[:max_length]
+
+
+def sync_aircraft_database(
+    *,
+    limit: Optional[int] = None,
+    use_cache: bool = False,
+    prune: bool = False,
+) -> Dict[str, int]:
+    """Populate the local :class:`~core.models.Aircraft` table from the live feed."""
+
+    records = fetch_live_fleet(limit=limit, use_cache=use_cache)
+
+    type_max = Aircraft._meta.get_field("type").max_length  # type: ignore[arg-type]
+    airline_max = Aircraft._meta.get_field("airline").max_length  # type: ignore[arg-type]
+    country_max = Aircraft._meta.get_field("country").max_length  # type: ignore[arg-type]
+
+    created = 0
+    updated = 0
+    skipped = 0
+    seen: Set[str] = set()
+
+    with transaction.atomic():
+        for entry in records:
+            registration = _trim(entry.get("registration"), max_length=16).upper()
+            if not registration or registration in seen:
+                skipped += 1
+                continue
+
+            seen.add(registration)
+
+            type_value = _trim(
+                entry.get("model")
+                or entry.get("type_code")
+                or entry.get("icao_aircraft_type"),
+                max_length=type_max,
+            )
+            airline_value = _trim(entry.get("operator") or entry.get("owner"), max_length=airline_max)
+            country_value = _trim(entry.get("country"), max_length=country_max)
+
+            defaults = {
+                "type": type_value,
+                "airline": airline_value,
+                "country": country_value,
+            }
+
+            aircraft, created_flag = Aircraft.objects.get_or_create(
+                registration=registration, defaults=defaults
+            )
+
+            if created_flag:
+                created += 1
+                continue
+
+            fields_to_update = []
+            for field, value in defaults.items():
+                if getattr(aircraft, field) != value:
+                    setattr(aircraft, field, value)
+                    fields_to_update.append(field)
+
+            if fields_to_update:
+                aircraft.save(update_fields=fields_to_update)
+                updated += 1
+
+    removed = 0
+    if prune and seen:
+        removed, _ = Aircraft.objects.exclude(registration__in=seen).delete()
+
+    summary = {
+        "processed": len(records),
+        "created": created,
+        "updated": updated,
+        "skipped": skipped,
+        "removed": removed,
+    }
+
+    logger.info("Aircraft database sync complete: %s", summary)
+
+    return summary
 
