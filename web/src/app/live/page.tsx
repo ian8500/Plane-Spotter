@@ -83,8 +83,10 @@ export default function LiveAdsbPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const markersRef = useRef<Map<string, MarkerRecord>>(new Map());
-  const intervalRef = useRef<number | null>(null);
+  const pollingTimeoutRef = useRef<number | null>(null);
   const fetchFlightsRef = useRef<() => Promise<void> | null>(null);
+  const isFetchingRef = useRef(false);
+  const pendingFetchRef = useRef(false);
 
   const [flights, setFlights] = useState<FlightState[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -285,10 +287,32 @@ export default function LiveAdsbPage() {
     [renderPopup, setSelectedFlightId],
   );
 
+  const scheduleNextFetch = useCallback(() => {
+    if (pollingTimeoutRef.current !== null) {
+      window.clearTimeout(pollingTimeoutRef.current);
+    }
+
+    pollingTimeoutRef.current = window.setTimeout(() => {
+      fetchFlightsRef.current?.();
+    }, REFRESH_INTERVAL_MS);
+  }, []);
+
   const fetchFlights = useCallback(async () => {
     if (!mapRef.current) {
       return;
     }
+
+    if (isFetchingRef.current) {
+      pendingFetchRef.current = true;
+      return;
+    }
+
+    if (pollingTimeoutRef.current !== null) {
+      window.clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+
+    isFetchingRef.current = true;
 
     try {
       setIsLoading(true);
@@ -326,14 +350,22 @@ export default function LiveAdsbPage() {
       );
       setLastUpdated(payload.generatedAt);
       updateMarkers(payload.flights);
-      setIsLoading(false);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to load live traffic";
       setError(message);
+    } finally {
+      isFetchingRef.current = false;
       setIsLoading(false);
+
+      if (pendingFetchRef.current) {
+        pendingFetchRef.current = false;
+        fetchFlightsRef.current?.();
+      } else {
+        scheduleNextFetch();
+      }
     }
-  }, [updateMarkers, originFilter, destinationFilter]);
+  }, [updateMarkers, originFilter, destinationFilter, scheduleNextFetch]);
 
   useEffect(() => {
     fetchFlightsRef.current = fetchFlights;
@@ -362,13 +394,10 @@ export default function LiveAdsbPage() {
       fetchFlightsRef.current?.();
     };
 
-    map.on("load", () => {
-      fetchFlightsRef.current?.();
-      map.on("moveend", handleMoveEnd);
-      intervalRef.current = window.setInterval(() => {
+      map.on("load", () => {
         fetchFlightsRef.current?.();
-      }, REFRESH_INTERVAL_MS);
-    });
+        map.on("moveend", handleMoveEnd);
+      });
 
     const markers = markersRef.current;
 
@@ -377,10 +406,12 @@ export default function LiveAdsbPage() {
       markers.forEach(({ marker }) => marker.remove());
       markers.clear();
       markersRef.current = new Map();
-      if (intervalRef.current !== null) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (pollingTimeoutRef.current !== null) {
+        window.clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
       }
+      isFetchingRef.current = false;
+      pendingFetchRef.current = false;
       map.remove();
       mapRef.current = null;
     };
