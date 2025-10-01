@@ -1,0 +1,14 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.sqlite3
+.env
+
+# Node
+web/.next/
+web/node_modules/
+web/.env.local
+
+# macOS
+.DS_Store
