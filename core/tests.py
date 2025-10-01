@@ -1,19 +1,21 @@
 import io
 from unittest import mock
 
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase, override_settings
-from rest_framework.test import APIRequestFactory
+from rest_framework import status
+from rest_framework.test import APIClient, APIRequestFactory
 
-from .models import Aircraft
+from .models import Aircraft, UserSeen
 from .services import aircraft_feed
 
 
-SAMPLE_CSV = """icao24,registration,manufacturername,model,typecode,icaoaircrafttype,operator,operatorcallsign,owner,serialnumber,built,registeredcountry,operatorcountry
-abcd12,G-EZTH,Airbus,A320-214,A320,L2J,EASYJET AIRLINE COMPANY LIMITED,EZY,EASYJET AIRLINE,1234,2014,United Kingdom,United Kingdom
-bbcd34,N12345,Boeing,737-8H4,B738,L2J,Southwest Airlines Co.,SWA,Southwest Airlines,9876,2017,United States,United States
-ccdd56,C-FGHI,Bombardier,CRJ900,CRJ9,L2J,Air Canada Express,ACAX,Jazz Aviation,5555,2015,Canada,Canada
+SAMPLE_CSV = """icao24,registration,manufacturername,manufacturericao,model,typecode,icaoaircrafttype,operator,operatorcallsign,owner,serialnumber,built,registeredcountry,operatorcountry
+abcd12,G-EZTH,Airbus,A320,Airbus A320-214,A320,L2J,EASYJET AIRLINE COMPANY LIMITED,EZY,EASYJET AIRLINE,1234,2014,United Kingdom,United Kingdom
+bbcd34,N12345,Boeing,B738,Boeing 737-8H4,B738,L2J,Southwest Airlines Co.,SWA,Southwest Airlines,9876,2017,United States,United States
+ccdd56,C-FGHI,Bombardier,CRJ9,Bombardier CRJ900,CRJ9,L2J,Air Canada Express,ACAX,Jazz Aviation,5555,2015,Canada,Canada
 """
 
 
@@ -51,6 +53,18 @@ class FetchLiveFleetTests(SimpleTestCase):
             results = aircraft_feed.fetch_live_fleet(limit=1, use_cache=False)
 
         self.assertEqual(len(results), 1)
+
+    def test_fetch_live_fleet_falls_back_to_sample_dataset(self):
+        with mock.patch.object(
+            aircraft_feed,
+            "_open_feed",
+            side_effect=aircraft_feed.AircraftFeedError("boom"),
+        ):
+            results = aircraft_feed.fetch_live_fleet(limit=5, use_cache=False)
+
+        self.assertGreater(len(results), 0)
+        registrations = {item["registration"] for item in results}
+        self.assertIn("G-EZTH", registrations)
 
 
 class LiveFleetViewTests(SimpleTestCase):
@@ -202,3 +216,55 @@ class SyncAircraftCommandTests(TestCase):
         self.assertIn("Processed 1 aircraft records.", output)
         self.assertIn("Created: 1, Updated: 0", output)
         self.assertTrue(Aircraft.objects.filter(registration="F-HSUN").exists())
+
+
+class UserSeenAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            username="spotter",
+            email="spotter@example.com",
+            password="supersecret",
+        )
+        self.client.force_authenticate(self.user)
+        self.aircraft = Aircraft.objects.create(
+            registration="G-EZTH",
+            type="Airbus A320-214",
+            airline="easyJet",
+            country="United Kingdom",
+        )
+
+    def test_user_can_log_seen_aircraft_by_registration(self):
+        response = self.client.post(
+            "/api/seen/",
+            {"registration": self.aircraft.registration},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(UserSeen.objects.filter(user=self.user).count(), 1)
+        entry = UserSeen.objects.get(user=self.user)
+        self.assertEqual(entry.aircraft, self.aircraft)
+        self.assertIn("aircraft", response.data)
+        self.assertEqual(response.data["aircraft"]["registration"], self.aircraft.registration)
+
+    def test_user_only_sees_their_own_entries(self):
+        mine = UserSeen.objects.create(user=self.user, aircraft=self.aircraft)
+        other_user = get_user_model().objects.create_user(
+            username="other",
+            email="other@example.com",
+            password="secret",
+        )
+        other_aircraft = Aircraft.objects.create(
+            registration="N12345",
+            type="Boeing 737",
+            airline="Southwest",
+            country="United States",
+        )
+        UserSeen.objects.create(user=other_user, aircraft=other_aircraft)
+
+        response = self.client.get("/api/seen/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], mine.id)

@@ -7,6 +7,7 @@ import io
 import logging
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Iterable, Iterator, List, Optional, Set
 
 from django.conf import settings
@@ -21,6 +22,9 @@ class AircraftFeedError(RuntimeError):
 
 
 logger = logging.getLogger(__name__)
+
+
+FALLBACK_DATASET = Path(__file__).resolve().parent / "data" / "aircraft_sample.csv"
 
 
 @dataclass(frozen=True)
@@ -127,8 +131,7 @@ def fetch_live_fleet(
         if cached is not None:
             return cached[:limit]
 
-    feed_url = url or settings.AIRCRAFT_FEED_URL
-    with _open_feed(feed_url) as handle:
+    def _read_from_handle(handle: io.TextIOBase) -> List[Dict[str, str]]:
         reader = csv.DictReader(handle)
         matches: List[Dict[str, str]] = []
         for record in _iter_records(reader):
@@ -139,6 +142,21 @@ def fetch_live_fleet(
             matches.append(record.as_dict())
             if len(matches) >= limit:
                 break
+        return matches
+
+    def _load_from_fallback() -> List[Dict[str, str]]:
+        if not FALLBACK_DATASET.exists():
+            raise AircraftFeedError("Aircraft feed is unavailable and no fallback dataset is bundled")
+        with FALLBACK_DATASET.open("r", encoding="utf-8") as handle:
+            return _read_from_handle(handle)
+
+    feed_url = url or settings.AIRCRAFT_FEED_URL
+    try:
+        with _open_feed(feed_url) as handle:
+            matches = _read_from_handle(handle)
+    except AircraftFeedError:
+        logger.warning("Falling back to bundled aircraft sample dataset", exc_info=True)
+        matches = _load_from_fallback()
 
     if cache_key and not (registration_filter or country_filter):
         cache.set(cache_key, matches, settings.AIRCRAFT_FEED_CACHE_SECONDS)

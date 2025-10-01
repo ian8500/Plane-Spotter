@@ -40,9 +40,18 @@ class AircraftViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 class UserSeenViewSet(viewsets.ModelViewSet):
-    queryset = UserSeen.objects.all()
     serializer_class = UserSeenSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            UserSeen.objects.filter(user=self.request.user)
+            .select_related("aircraft", "airport")
+            .order_by("-seen_at")
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by("-created")
