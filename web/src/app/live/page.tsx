@@ -95,6 +95,7 @@ export default function LiveAdsbPage() {
   const [airportError, setAirportError] = useState<string | null>(null);
   const [originFilter, setOriginFilter] = useState<string>("");
   const [destinationFilter, setDestinationFilter] = useState<string>("");
+  const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -215,6 +216,8 @@ export default function LiveAdsbPage() {
     [formatAirportDetail],
   );
 
+  const selectedFlightIdRef = useRef<string | null>(null);
+
   const updateMarkers = useCallback(
     (newFlights: FlightState[]) => {
       if (!mapRef.current) return;
@@ -229,6 +232,9 @@ export default function LiveAdsbPage() {
           existing.marker.setLngLat(position).setRotation(flight.heading);
           existing.label.textContent = flight.callsign || id;
           existing.marker.getPopup()?.setHTML(renderPopup(flight));
+          existing.marker
+            .getElement()
+            ?.classList.toggle("adsb-marker--selected", selectedFlightIdRef.current === id);
           seen.add(id);
           return;
         }
@@ -243,6 +249,10 @@ export default function LiveAdsbPage() {
 
         markerElement.appendChild(arrow);
         markerElement.appendChild(label);
+
+        markerElement.addEventListener("click", () => {
+          setSelectedFlightId(id);
+        });
 
         const popup = new Popup({ offset: 18, closeButton: false }).setHTML(
           renderPopup(flight),
@@ -259,6 +269,9 @@ export default function LiveAdsbPage() {
           .addTo(mapRef.current);
 
         markersRef.current.set(id, { marker, label });
+        marker
+          .getElement()
+          ?.classList.toggle("adsb-marker--selected", selectedFlightIdRef.current === id);
         seen.add(id);
       });
 
@@ -269,7 +282,7 @@ export default function LiveAdsbPage() {
         }
       });
     },
-    [renderPopup],
+    [renderPopup, setSelectedFlightId],
   );
 
   const fetchFlights = useCallback(async () => {
@@ -308,6 +321,9 @@ export default function LiveAdsbPage() {
       };
 
       setFlights(payload.flights);
+      setSelectedFlightId((previous) =>
+        previous && payload.flights.some((flight) => flight.id === previous) ? previous : null,
+      );
       setLastUpdated(payload.generatedAt);
       updateMarkers(payload.flights);
       setIsLoading(false);
@@ -376,6 +392,45 @@ export default function LiveAdsbPage() {
     }
     fetchFlights();
   }, [fetchFlights]);
+
+  useEffect(() => {
+    selectedFlightIdRef.current = selectedFlightId;
+    markersRef.current.forEach((record, id) => {
+      record.marker
+        .getElement()
+        ?.classList.toggle("adsb-marker--selected", selectedFlightId === id);
+    });
+  }, [selectedFlightId]);
+
+  const selectedFlight = useMemo(() => {
+    if (!selectedFlightId) {
+      return null;
+    }
+    return flights.find((flight) => flight.id === selectedFlightId) ?? null;
+  }, [flights, selectedFlightId]);
+
+  useEffect(() => {
+    if (!mapRef.current) {
+      return;
+    }
+
+    if (!selectedFlight) {
+      markersRef.current.forEach((record) => {
+        record.marker.getPopup()?.remove();
+      });
+      return;
+    }
+
+    const record = markersRef.current.get(selectedFlight.id);
+    if (!record) {
+      return;
+    }
+
+    const popup = record.marker.getPopup();
+    if (popup && !popup.isOpen()) {
+      popup.addTo(mapRef.current);
+    }
+  }, [selectedFlight]);
 
   const formattedTimestamp = useMemo(() => {
     if (!lastUpdated) return null;
@@ -456,6 +511,58 @@ export default function LiveAdsbPage() {
         </section>
         <aside className="max-h-[75vh] w-full rounded-3xl border border-sky-900/40 bg-slate-950/60 p-6 shadow-xl shadow-sky-900/40 backdrop-blur-xl lg:w-[360px]">
           <h2 className="text-xl font-semibold text-sky-100">Aircraft Details</h2>
+          <div className="mt-4 mb-6 rounded-2xl border border-sky-800/60 bg-slate-900/70 p-4 text-sm text-sky-100 shadow-inner shadow-sky-900/40">
+            {selectedFlight ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-sky-300/80">Selected Flight</p>
+                  <p className="text-lg font-semibold text-sky-100">
+                    {selectedFlight.callsign || selectedFlight.id}
+                  </p>
+                  <p className="text-xs text-sky-300/70">ICAO24 • {selectedFlight.id}</p>
+                </div>
+                <div className="rounded-xl bg-slate-950/60 p-3 text-xs text-sky-200/80">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-sky-300/80">Route</span>
+                    <span className="text-sky-200/70">
+                      {formatAirportDetail(selectedFlight.origin)} ➞ {formatAirportDetail(selectedFlight.destination)}
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid grid-cols-2 gap-2 text-[0.7rem] uppercase tracking-[0.2em] text-sky-300/60">
+                    <div>
+                      <dt className="text-sky-300/70">Altitude</dt>
+                      <dd className="text-base font-semibold tracking-normal text-sky-100">
+                        {selectedFlight.alt.toLocaleString()} ft
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-sky-300/70">Speed</dt>
+                      <dd className="text-base font-semibold tracking-normal text-sky-100">
+                        {Math.round(selectedFlight.speed)} kt
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-sky-300/70">Heading</dt>
+                      <dd className="text-base font-semibold tracking-normal text-sky-100">
+                        {Math.round(selectedFlight.heading)}°
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-sky-300/70">Position</dt>
+                      <dd className="text-base font-semibold tracking-normal text-sky-100">
+                        {selectedFlight.lat.toFixed(2)}°, {selectedFlight.lon.toFixed(2)}°
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3 text-sm text-sky-200/80">
+                <p className="text-xs uppercase tracking-[0.3em] text-sky-300/80">No flight selected</p>
+                <p>Select an aircraft on the radar or from the list below to view detailed telemetry.</p>
+              </div>
+            )}
+          </div>
           <p className="mb-4 text-xs uppercase tracking-[0.3em] text-sky-400">Sorted by altitude</p>
           <div className="grid grid-cols-1 gap-3 overflow-y-auto pr-1" style={{ maxHeight: "calc(75vh - 4rem)" }}>
             {isLoading && !flights.length ? (
@@ -468,7 +575,21 @@ export default function LiveAdsbPage() {
                 .map((flight) => (
                   <article
                     key={flight.id}
-                    className="rounded-2xl border border-sky-800/60 bg-slate-900/70 px-4 py-3 text-sm text-sky-100 shadow-inner shadow-sky-900/40"
+                    className={`rounded-2xl border px-4 py-3 text-sm shadow-inner shadow-sky-900/40 transition-colors ${
+                      selectedFlightId === flight.id
+                        ? "border-sky-400/80 bg-slate-900/90"
+                        : "border-sky-800/60 bg-slate-900/70 hover:border-sky-600/70 hover:bg-slate-900/80"
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedFlightId(flight.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedFlightId(flight.id);
+                      }
+                    }}
+                    aria-pressed={selectedFlightId === flight.id}
                   >
                     <div className="flex items-baseline justify-between">
                       <span className="text-base font-semibold text-sky-100">{flight.callsign || flight.id}</span>
