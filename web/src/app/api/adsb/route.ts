@@ -12,6 +12,7 @@ export type FlightState = {
   heading: number;
   origin: string;
   destination: string;
+  registration: string | null;
 };
 
 type OpenSkyStateVector = [
@@ -49,6 +50,10 @@ const M_TO_FEET = 3.28084;
 
 const ROUTE_CACHE_TTL_MS = 5 * 60 * 1000; // five minutes
 const MAX_ROUTE_LOOKUPS = 80;
+const METADATA_CACHE_TTL_MS = 30 * 60 * 1000; // thirty minutes
+const MAX_METADATA_LOOKUPS = 120;
+
+const OPENSKY_METADATA_ENDPOINT = "https://opensky-network.org/api/metadata/aircraft/icao24";
 
 type FlightRoute = {
   origin: string | null;
@@ -61,6 +66,17 @@ type RouteCacheEntry = {
 };
 
 const routeCache = new Map<string, RouteCacheEntry>();
+
+type AircraftMetadata = {
+  registration: string | null;
+};
+
+type MetadataCacheEntry = {
+  metadata: AircraftMetadata | null;
+  expiresAt: number;
+};
+
+const metadataCache = new Map<string, MetadataCacheEntry>();
 
 function parseFloatOrNull(value: string | null): number | null {
   if (!value) return null;
@@ -102,6 +118,7 @@ function mapStateVector(state: OpenSkyStateVector): FlightState | null {
     heading: clampHeading(heading ?? null),
     origin: originCountry?.trim() || "—",
     destination: "—",
+    registration: null,
   };
 }
 
@@ -275,6 +292,74 @@ async function enrichFlightsWithRoutes(
     });
 }
 
+async function fetchAircraftMetadata(icao24: string): Promise<AircraftMetadata | null> {
+  const key = icao24.trim().toLowerCase();
+  if (!key) {
+    return null;
+  }
+
+  const now = Date.now();
+  const cached = metadataCache.get(key);
+  if (cached && cached.expiresAt > now) {
+    return cached.metadata;
+  }
+
+  try {
+    const response = await fetch(`${OPENSKY_METADATA_ENDPOINT}/${encodeURIComponent(key)}`, {
+      cache: "no-store",
+      headers: {
+        accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenSky metadata lookup failed with status ${response.status}`);
+    }
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    const registrationRaw = payload?.registration;
+    const registration =
+      typeof registrationRaw === "string" && registrationRaw.trim()
+        ? registrationRaw.trim().toUpperCase()
+        : null;
+
+    const metadata: AircraftMetadata = {
+      registration,
+    };
+
+    metadataCache.set(key, { metadata, expiresAt: now + METADATA_CACHE_TTL_MS });
+    return metadata;
+  } catch {
+    metadataCache.set(key, { metadata: null, expiresAt: now + METADATA_CACHE_TTL_MS / 2 });
+    return null;
+  }
+}
+
+async function enrichFlightsWithMetadata(flights: FlightState[]): Promise<FlightState[]> {
+  if (!flights.length) {
+    return [];
+  }
+
+  const uniqueIds = Array.from(new Set(flights.map((flight) => flight.id))).slice(
+    0,
+    MAX_METADATA_LOOKUPS,
+  );
+
+  const lookups = await Promise.all(
+    uniqueIds.map(async (icao24) => [icao24, await fetchAircraftMetadata(icao24)] as const),
+  );
+
+  const metadataMap = new Map(lookups);
+
+  return flights.map((flight) => {
+    const metadata = metadataMap.get(flight.id) ?? null;
+    return {
+      ...flight,
+      registration: metadata?.registration ?? null,
+    };
+  });
+}
+
 function parseAirportFilters(param: string | null): Set<string> {
   if (!param) {
     return new Set();
@@ -307,11 +392,30 @@ function buildOpenSkyUrl(url: URL): string {
   return query ? `${OPENSKY_ENDPOINT}?${query}` : OPENSKY_ENDPOINT;
 }
 
+function parseAltitude(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  return Math.max(0, parsed);
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const endpoint = buildOpenSkyUrl(url);
   const originFilters = parseAirportFilters(url.searchParams.get("origin"));
   const destinationFilters = parseAirportFilters(url.searchParams.get("destination"));
+  let minAltitude = parseAltitude(url.searchParams.get("minAlt"));
+  let maxAltitude = parseAltitude(url.searchParams.get("maxAlt"));
+
+  if (minAltitude !== null && maxAltitude !== null && minAltitude > maxAltitude) {
+    [minAltitude, maxAltitude] = [maxAltitude, minAltitude];
+  }
 
   try {
     const response = await fetch(endpoint, {
@@ -329,11 +433,25 @@ export async function GET(request: Request) {
     const flights =
       payload.states?.map(mapStateVector).filter((state): state is FlightState => state !== null) ?? [];
 
-    const filteredFlights = await enrichFlightsWithRoutes(
-      flights.slice(0, MAX_FLIGHTS),
+    const altitudeFiltered = flights
+      .filter((flight) => {
+        if (minAltitude !== null && flight.alt < minAltitude) {
+          return false;
+        }
+        if (maxAltitude !== null && flight.alt > maxAltitude) {
+          return false;
+        }
+        return true;
+      })
+      .slice(0, MAX_FLIGHTS);
+
+    const flightsWithRoutes = await enrichFlightsWithRoutes(
+      altitudeFiltered,
       originFilters,
       destinationFilters,
     );
+
+    const flightsWithMetadata = await enrichFlightsWithMetadata(flightsWithRoutes);
 
     const generatedAt =
       typeof payload.time === "number"
@@ -341,7 +459,7 @@ export async function GET(request: Request) {
         : new Date().toISOString();
 
     return NextResponse.json({
-      flights: filteredFlights,
+      flights: flightsWithMetadata,
       generatedAt,
     });
   } catch (error) {
