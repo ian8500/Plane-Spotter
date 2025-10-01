@@ -1,16 +1,34 @@
 # Aircraft Database Synchronisation
 
-The aircraft logbook in the web client reads from the `/aircraft/` endpoint, which serves records from the `core.Aircraft` model. A fresh install only contains the schema, so you need to import live data from the OpenSky aircraft database feed before those lookups will work.
+The aircraft logbook in the web client reads from the `/aircraft/` endpoint, which serves records from the `core.Aircraft` model. A fresh install only contains the schema, so you need to load some fleet data before those lookups will work. The steps below walk through preparing the environment, running the migrations (which include a baked-in sample fleet), and importing the latest aircraft feed.
+
+## Prerequisites
+
+1. **Install backend dependencies.** From an activated virtual environment run:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+   The requirements list ships with the repo and covers Django, Django REST Framework, CORS headers, and JWT auth.
+
+2. **Apply the database migrations.** This creates the schema and executes the seed migration that inserts roughly two dozen representative aircraft registrations:
+
+   ```bash
+   python manage.py migrate
+   ```
+
+   The migration uses `update_or_create`, so it is safe to rerun after pulling updates — existing sample tail numbers will be refreshed rather than duplicated.
 
 ## One-off or Manual Sync
 
-Run the management command below from the project root after the virtualenv is activated:
+Run the management command below from the project root once the environment is ready:
 
 ```bash
 python manage.py sync_aircraft_database
 ```
 
-This downloads up to `AIRCRAFT_FEED_MAX_RESULTS` records (default `200`) from the feed and upserts them into the local database. Existing registrations are updated with the latest airline, type, and country information.
+This downloads up to `AIRCRAFT_FEED_MAX_RESULTS` records (default `200`) from the OpenSky aircraft metadata feed and upserts them into the local database. Existing registrations are updated with the latest airline, type, and country information. Coupled with the migration step above, you get an instant starter fleet plus live data from the feed.
 
 ### Useful options
 
@@ -27,3 +45,18 @@ The command uses the same settings as the live fleet endpoint. To change the sou
 - `AIRCRAFT_FEED_TIMEOUT`
 
 Adjust `AIRCRAFT_FEED_MAX_RESULTS` if you want to prefill the database with a larger slice of the fleet for autocomplete in the logbook.
+
+## Verifying the Data
+
+After the sync completes, you can sanity-check the results by opening a Django shell and counting the aircraft or by visiting the fleet browser in the web client:
+
+```bash
+python manage.py shell
+```
+
+```python
+from core.models import Aircraft
+Aircraft.objects.count()
+```
+
+Expect at least the sample registrations from the migration, with additional entries filled in by the feed import.
