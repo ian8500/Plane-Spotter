@@ -97,6 +97,9 @@ export default function LiveAdsbPage() {
   const [airportError, setAirportError] = useState<string | null>(null);
   const [originFilter, setOriginFilter] = useState<string>("");
   const [destinationFilter, setDestinationFilter] = useState<string>("");
+  const [minAltitude, setMinAltitude] = useState<string>("");
+  const [maxAltitude, setMaxAltitude] = useState<string>("");
+  const [limitToMapView, setLimitToMapView] = useState<boolean>(true);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -190,7 +193,8 @@ export default function LiveAdsbPage() {
       .sort((a, b) => a.value.localeCompare(b.value));
   }, [airports]);
 
-  const hasFilters = originFilter !== "" || destinationFilter !== "";
+  const hasFilters =
+    originFilter !== "" || destinationFilter !== "" || minAltitude !== "" || maxAltitude !== "";
 
   const headerStats = useMemo(() => {
     if (!flights.length) {
@@ -200,16 +204,17 @@ export default function LiveAdsbPage() {
     const averageAltitude = Math.round(
       flights.reduce((sum, flight) => sum + flight.alt, 0) / flights.length,
     );
-    const prefix = hasFilters ? "match filters" : "tracked";
+    const prefix = hasFilters ? "match filters" : limitToMapView ? "tracked" : "available";
     return `${flights.length} aircraft ${prefix} · Avg ${averageAltitude.toLocaleString()} ft`;
-  }, [flights, hasFilters]);
+  }, [flights, hasFilters, limitToMapView]);
 
   const renderPopup = useCallback(
     (flight: FlightState) => {
-      const { callsign, alt, speed, heading } = flight;
+      const { callsign, alt, speed, heading, registration } = flight;
       return `
         <div class="adsb-popup">
           <div class="adsb-popup__title">${callsign || flight.id}</div>
+          ${registration ? `<div class="adsb-popup__meta">Reg ${registration}</div>` : ""}
           <div class="adsb-popup__meta">${formatAirportDetail(flight.origin)} ➞ ${formatAirportDetail(flight.destination)}</div>
           <div class="adsb-popup__meta">Alt ${alt.toLocaleString()} ft · ${speed} kt · HDG ${Math.round(heading)}°</div>
         </div>
@@ -316,19 +321,30 @@ export default function LiveAdsbPage() {
 
     try {
       setIsLoading(true);
-      const bounds = mapRef.current.getBounds();
-      const params = new URLSearchParams({
-        minLat: bounds.getSouth().toFixed(4),
-        maxLat: bounds.getNorth().toFixed(4),
-        minLon: bounds.getWest().toFixed(4),
-        maxLon: bounds.getEast().toFixed(4),
-      });
+      const params = new URLSearchParams();
+
+      if (limitToMapView) {
+        const bounds = mapRef.current.getBounds();
+        params.set("minLat", bounds.getSouth().toFixed(4));
+        params.set("maxLat", bounds.getNorth().toFixed(4));
+        params.set("minLon", bounds.getWest().toFixed(4));
+        params.set("maxLon", bounds.getEast().toFixed(4));
+      }
 
       if (originFilter) {
         params.set("origin", originFilter);
       }
       if (destinationFilter) {
         params.set("destination", destinationFilter);
+      }
+
+      const minAltNumber = Number.parseInt(minAltitude, 10);
+      if (Number.isFinite(minAltNumber) && minAltitude.trim() !== "") {
+        params.set("minAlt", Math.max(0, minAltNumber).toString());
+      }
+      const maxAltNumber = Number.parseInt(maxAltitude, 10);
+      if (Number.isFinite(maxAltNumber) && maxAltitude.trim() !== "") {
+        params.set("maxAlt", Math.max(0, maxAltNumber).toString());
       }
 
       const response = await fetch(`/api/adsb?${params.toString()}`, {
@@ -365,7 +381,8 @@ export default function LiveAdsbPage() {
         scheduleNextFetch();
       }
     }
-  }, [updateMarkers, originFilter, destinationFilter, scheduleNextFetch]);
+
+    
 
   useEffect(() => {
     fetchFlightsRef.current = fetchFlights;
@@ -524,6 +541,47 @@ export default function LiveAdsbPage() {
               </select>
             </label>
           </div>
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300/80">
+                Minimum altitude (ft)
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={100}
+                value={minAltitude}
+                onChange={(event) => setMinAltitude(event.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="0"
+                className="rounded-xl border border-sky-800/60 bg-slate-900/80 px-3 py-2 text-sm text-sky-100 shadow-inner shadow-sky-900/40 focus:border-sky-500 focus:outline-none"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300/80">
+                Maximum altitude (ft)
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={100}
+                value={maxAltitude}
+                onChange={(event) => setMaxAltitude(event.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="45000"
+                className="rounded-xl border border-sky-800/60 bg-slate-900/80 px-3 py-2 text-sm text-sky-100 shadow-inner shadow-sky-900/40 focus:border-sky-500 focus:outline-none"
+              />
+            </label>
+          </div>
+          <label className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-sky-800/60 bg-slate-900/80 px-4 py-3 text-xs text-sky-200/80 shadow-inner shadow-sky-900/40">
+            <span className="font-semibold uppercase tracking-[0.3em] text-sky-300/80">Limit to map view</span>
+            <input
+              type="checkbox"
+              checked={limitToMapView}
+              onChange={(event) => setLimitToMapView(event.target.checked)}
+              className="h-4 w-4 rounded border-sky-700 bg-slate-950 text-sky-500 focus:ring-sky-400"
+            />
+          </label>
           {airportError && (
             <div className="mb-4 rounded-xl border border-amber-400/50 bg-amber-950/40 px-4 py-2 text-xs text-amber-100">
               {airportError}
@@ -550,6 +608,9 @@ export default function LiveAdsbPage() {
                   <p className="text-lg font-semibold text-sky-100">
                     {selectedFlight.callsign || selectedFlight.id}
                   </p>
+                  {selectedFlight.registration ? (
+                    <p className="text-xs text-sky-300/70">Registration • {selectedFlight.registration}</p>
+                  ) : null}
                   <p className="text-xs text-sky-300/70">ICAO24 • {selectedFlight.id}</p>
                 </div>
                 <div className="rounded-xl bg-slate-950/60 p-3 text-xs text-sky-200/80">
@@ -626,6 +687,9 @@ export default function LiveAdsbPage() {
                       <span className="text-base font-semibold text-sky-100">{flight.callsign || flight.id}</span>
                       <span className="text-xs text-sky-300/80">{Math.round(flight.speed)} kt</span>
                     </div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.2em] text-sky-300/60">
+                      {flight.registration ? `Reg ${flight.registration}` : `ICAO24 ${flight.id}`}
+                    </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-sky-200/70">
                       <span
                         title={`${formatAirportDetail(flight.origin)} → ${formatAirportDetail(flight.destination)}`}
@@ -642,7 +706,9 @@ export default function LiveAdsbPage() {
                 ))
             ) : (
               <div className="rounded-xl border border-sky-800/50 bg-slate-900/70 px-4 py-6 text-center text-sm text-sky-200/70">
-                No aircraft within the current map view.
+                {limitToMapView
+                  ? "No aircraft within the current map view."
+                  : "No aircraft match the selected criteria."}
               </div>
             )}
           </div>
