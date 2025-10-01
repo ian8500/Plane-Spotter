@@ -130,18 +130,33 @@ def fetch_live_fleet(
     Results can be filtered by registration substring and country (case insensitive).
     """
 
-    limit = limit or settings.AIRCRAFT_FEED_MAX_RESULTS
-    limit = min(limit, settings.AIRCRAFT_FEED_MAX_RESULTS)
+    max_results = settings.AIRCRAFT_FEED_MAX_RESULTS
+
+    unlimited_requested = limit is not None and limit <= 0
+    if unlimited_requested:
+        effective_limit: Optional[int] = None
+    else:
+        effective_limit = limit
+
+    if max_results > 0 and not unlimited_requested:
+        if effective_limit is None:
+            effective_limit = max_results
+        else:
+            effective_limit = min(effective_limit, max_results)
+
     cache_key = None
 
     registration_filter = registration.lower() if registration else None
     country_filter = country.lower() if country else None
 
     if use_cache and registration_filter is None and country_filter is None:
-        cache_key = f"aircraft-feed:{limit}:{url or ''}"
+        limit_key = effective_limit if effective_limit is not None else "all"
+        cache_key = f"aircraft-feed:{limit_key}:{url or ''}"
         cached = cache.get(cache_key)
         if cached is not None:
-            return cached[:limit]
+            if effective_limit is None:
+                return cached
+            return cached[:effective_limit]
 
     def _read_from_handle(handle: io.TextIOBase) -> List[Dict[str, str]]:
         reader = csv.DictReader(handle)
@@ -152,7 +167,7 @@ def fetch_live_fleet(
             if country_filter and country_filter not in record.country.lower():
                 continue
             matches.append(record.as_dict())
-            if len(matches) >= limit:
+            if effective_limit is not None and len(matches) >= effective_limit:
                 break
         return matches
 

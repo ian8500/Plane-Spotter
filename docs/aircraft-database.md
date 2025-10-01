@@ -54,7 +54,7 @@ The command uses the same settings as the live fleet endpoint. To change the sou
 - `AIRCRAFT_FEED_MAX_RESULTS`
 - `AIRCRAFT_FEED_TIMEOUT`
 
-Adjust `AIRCRAFT_FEED_MAX_RESULTS` if you want to prefill the database with a larger slice of the fleet for autocomplete in the logbook.
+Adjust `AIRCRAFT_FEED_MAX_RESULTS` if you want to prefill the database with a larger slice of the fleet for autocomplete in the logbook. Set it to `0` (or a negative number) to remove the cap entirely and import the complete feed. You can also pass `--limit 0` to the sync commands when you only want the full world fleet for a single run without changing your environment configuration.
 
 ## Verifying the Data
 
