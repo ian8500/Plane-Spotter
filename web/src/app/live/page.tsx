@@ -19,11 +19,11 @@ const SECTIONAL_STYLE: StyleSpecification = {
     },
     sectional: {
       type: "raster",
-      tiles: [
-        "https://wms.chartbundle.com/tms/v1.0/sectional/{z}/{x}/{y}.png?opt=hires",
-      ],
+      tiles: ["https://tile.opentopomap.org/{z}/{x}/{y}.png"],
       tileSize: 256,
-      attribution: "Charts © ChartBundle / FAA",
+      attribution:
+        "Map data © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)",
+      maxzoom: 17,
     },
   },
   layers: [
