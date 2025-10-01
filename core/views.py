@@ -9,7 +9,7 @@ class AirportViewSet(viewsets.ModelViewSet):
 
     queryset = (
         Airport.objects.all()
-        .prefetch_related("frequencies", "spots")
+        .prefetch_related("frequencies", "spots", "resources")
         .order_by("icao")
     )
     serializer_class = AirportSerializer

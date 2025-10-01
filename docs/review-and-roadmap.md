@@ -15,6 +15,7 @@
 ## Key Improvements Made in This Iteration
 - ✅ Fixed the login screen to authenticate against the Django JWT endpoint and store the token locally (this mirrors the flow you can re-use on mobile).
 - ✅ Added an airport detail page that surfaces frequencies and spotting locations – a pattern to follow for other resources.
+- ✅ Seeded the API with the major UK hubs (EGLL, EGKK, EGCC, EGSS, EGGW, EGBB, EGPH, EGPF, EGGD, EGNT) including ATC frequencies, spotting locations and curated resources like airfield maps.
 - ✅ Tightened backend querysets to prefetch related data so that the API delivers richer responses efficiently.
 - ✅ Added this roadmap to capture architecture decisions and next steps.
 
